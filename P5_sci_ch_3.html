@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5 Science Ch.3 Properties of Air - Revision & Match Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f0f9ff;
+        }
+
+        /* 3D Flip Card Styles for Flashcard */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e0f2fe;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #38bdf8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0284c7;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                    <i class="fa-solid fa-wind text-2xl text-cyan-200"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wide">P5 Science Unit 2 Ch.3</h1>
+                    <p class="text-xs sm:text-sm text-cyan-100 font-medium">Properties of Air 空氣的性質</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <nav class="flex bg-blue-800/40 p-1.5 rounded-2xl backdrop-blur-md border border-white/10 w-full sm:w-auto justify-center">
+                <button id="tab-flashcards" onclick="switchTab('flashcards')" class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-blue-700 shadow-md">
+                    <i class="fa-solid fa-clone"></i>
+                    <span>溫習閃卡 (Flash Cards)</span>
+                </button>
+                <button id="tab-game" onclick="switchTab('game')" class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span>英文配對遊戲 (Match Game)</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+
+        <!-- ==================== FLASH CARDS SECTION ==================== -->
+        <section id="section-flashcards" class="flex flex-col items-center justify-center flex-grow py-4">
+            
+            <!-- Controls Bar -->
+            <div class="w-full max-w-xl flex justify-between items-center mb-4 px-2">
+                <span id="card-progress" class="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full shadow-sm">
+                    Card 1 / 30
+                </span>
+                <button onclick="shuffleFlashcards()" class="px-3.5 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-semibold transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-shuffle"></i> 隨機排序 Shuffle
+                </button>
+            </div>
+
+            <!-- 3D Card Container -->
+            <div class="w-full max-w-xl h-96 perspective-1000 cursor-pointer group" onclick="flipCard()">
+                <div id="flashcard-inner" class="w-full h-full relative transform-style-3d transition-transform duration-500 shadow-xl rounded-3xl bg-white border-2 border-sky-100">
+                    
+                    <!-- Front Side (Term) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rounded-3xl p-6 flex flex-col justify-between bg-gradient-to-br from-white via-sky-50 to-blue-50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-sky-500 uppercase tracking-wider bg-white px-3 py-1 rounded-full shadow-sm border border-sky-100">
+                                <i class="fa-solid fa-book-bookmark mr-1"></i> Term 詞彙
+                            </span>
+                            <!-- Audio Button -->
+                            <button onclick="speakCurrentWord(event)" class="p-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full shadow-md hover:scale-110 active:scale-95 transition" title="Listen Pronunciation">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
+                        </div>
+
+                        <div class="text-center my-auto px-4">
+                            <h2 id="fc-english" class="text-3xl sm:text-4xl font-extrabold text-slate-800 mb-2">Nitrogen</h2>
+                            <p id="fc-phonetic" class="text-sm sm:text-base text-cyan-600 font-mono mb-4">/ˈnaɪtrədʒən/</p>
+                            <div class="inline-block bg-blue-600 text-white font-bold px-4 py-1.5 rounded-2xl text-lg shadow-sm">
+                                <span id="fc-chinese">氮氣</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 點擊卡片翻看英文與中文解釋 Click to flip
+                        </div>
+                    </div>
+
+                    <!-- Back Side (Definition) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-6 flex flex-col justify-between bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-cyan-200 uppercase tracking-wider bg-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+                                <i class="fa-solid fa-lightbulb mr-1"></i> Explanation 解釋
+                            </span>
+                            <button onclick="speakCurrentWord(event)" class="p-2.5 bg-white/20 hover:bg-white/30 text-white rounded-full backdrop-blur-md transition" title="Listen Pronunciation">
+                                <i class="fa-solid fa-volume-high text-base"></i>
+                            </button>
+                        </div>
+
+                        <div class="my-auto space-y-4 px-2 overflow-y-auto max-h-60">
+                            <div>
+                                <h3 class="text-xs uppercase tracking-wider text-cyan-200 font-bold mb-1">English Explanation:</h3>
+                                <p id="fc-def-en" class="text-sm sm:text-base leading-relaxed font-medium">A colourless and odourless gas that makes up about 4/5 (78%) of the air.</p>
+                            </div>
+                            <div class="border-t border-white/20 pt-3">
+                                <h3 class="text-xs uppercase tracking-wider text-cyan-200 font-bold mb-1">中文解釋：</h3>
+                                <p id="fc-def-zh" class="text-sm sm:text-base leading-relaxed font-medium">無色無味氣體，約占空氣體積的 4/5（78%）。</p>
+                            </div>
+                        </div>
+
+                        <div class="text-center text-xs text-cyan-200/80 font-medium flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 點擊翻回正面 Click to flip back
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center gap-4 mt-6">
+                <button onclick="prevCard()" class="px-5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-2xl font-bold shadow-sm hover:shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> 上一個 Prev
+                </button>
+                <button onclick="nextCard()" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-2xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-2">
+                    下一個 Next <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== MATCHING GAME SECTION ==================== -->
+        <section id="section-game" class="hidden flex-col flex-grow py-2">
+            
+            <!-- Game Header Controls -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-md border border-sky-100 mb-5">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    
+                    <!-- Difficulty Buttons -->
+                    <div class="flex items-center gap-2 w-full md:w-auto justify-center">
+                        <span class="text-xs font-bold text-slate-500 uppercase mr-1">難度 Level:</span>
+                        <button id="diff-easy" onclick="setDifficulty('easy')" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition bg-blue-600 text-white shadow">
+                            容易 (10條)
+                        </button>
+                        <button id="diff-medium" onclick="setDifficulty('medium')" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition bg-slate-100 text-slate-600 hover:bg-slate-200">
+                            普通 (20條)
+                        </button>
+                        <button id="diff-hard" onclick="setDifficulty('hard')" class="px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition bg-slate-100 text-slate-600 hover:bg-slate-200">
+                            困難 (30條)
+                        </button>
+                    </div>
+
+                    <!-- Game Stats & Reset -->
+                    <div class="flex items-center gap-5 text-sm font-bold">
+                        <div class="flex items-center gap-2 text-slate-600 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-100">
+                            <i class="fa-solid fa-stopwatch text-cyan-600"></i>
+                            <span>時間 Time: <span id="game-timer" class="text-blue-600 font-mono text-base">00:00</span></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-600 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-100">
+                            <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                            <span>進度 Progress: <span id="game-score" class="text-emerald-600 font-mono text-base">0 / 10</span></span>
+                        </div>
+                        <button onclick="initGame()" class="px-3.5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl shadow transition flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
+                            <i class="fa-solid fa-rotate-right"></i> 重新開局 Restart
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Game Instruction Banner -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-cyan-200/60 rounded-2xl p-3 mb-4 text-center text-xs sm:text-sm font-medium text-slate-700 shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-info text-cyan-600 text-base"></i>
+                <span>玩法說明：請點擊左側的「英文單詞」，然後點擊右側對應的「英文解釋」進行正確配對！</span>
+            </div>
+
+            <!-- Direct Matching Grid Container (Terms vs Definitions) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-grow">
+                
+                <!-- Left Column: English Terms -->
+                <div class="flex flex-col gap-2.5">
+                    <h3 class="text-sm font-extrabold text-blue-900 uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-blue-600"></i> 1. Select English Term
+                    </h3>
+                    <div id="terms-list" class="space-y-2.5 flex-grow overflow-y-auto max-h-[600px] pr-1">
+                        <!-- Term cards injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Right Column: English Definitions -->
+                <div class="flex flex-col gap-2.5">
+                    <h3 class="text-sm font-extrabold text-blue-900 uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-font text-cyan-600"></i> 2. Match English Definition
+                    </h3>
+                    <div id="defs-list" class="space-y-2.5 flex-grow overflow-y-auto max-h-[600px] pr-1">
+                        <!-- Definition cards injected via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Completion Modal -->
+    <div id="modal-completion" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center transform transition-all scale-100 border border-sky-100">
+            <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-500 text-4xl shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 mb-1">恭喜完成配對！</h3>
+            <p class="text-slate-500 text-sm mb-6">Great job! All definitions successfully matched!</p>
+            
+            <div class="bg-slate-50 rounded-2xl p-4 mb-6 space-y-2 border border-slate-100">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500 font-medium">所用時間 Time Taken:</span>
+                    <span id="final-time" class="font-bold text-slate-800 font-mono">01:25</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500 font-medium">難度級別 Difficulty:</span>
+                    <span id="final-diff" class="font-bold text-blue-600 uppercase">Easy (10)</span>
+                </div>
+            </div>
+
+            <button onclick="closeModalAndRestart()" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-extrabold rounded-2xl shadow-lg transition">
+                再玩一次 Play Again
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Core Logic -->
+    <script>
+        // 30 Scientific Terms Data from P5 Sci Ch3
+        const vocabularyData = [
+            {
+                id: 1,
+                english: "Nitrogen",
+                phonetic: "/ˈnaɪtrədʒən/",
+                chinese: "氮氣",
+                defEn: "A colourless and odourless gas that makes up about 4/5 (78%) of the air.",
+                defZh: "無色無味的氣體，約佔空氣總體積的 4/5（78%）。"
+            },
+            {
+                id: 2,
+                english: "Oxygen",
+                phonetic: "/ˈɒksɪdʒən/",
+                chinese: "氧氣",
+                defEn: "A gas essential for respiration that makes up about 1/5 (21%) of the air.",
+                defZh: "維持呼吸必需的氣體，約佔空氣總體積的 1/5（21%）。"
+            },
+            {
+                id: 3,
+                english: "Carbon Dioxide",
+                phonetic: "/ˈkɑːbən daɪˈɒksaɪd/",
+                chinese: "二氧化碳",
+                defEn: "A gas present in small amounts in air, produced by respiration and burning.",
+                defZh: "空氣中微量的氣體，由生物呼吸及燃燒產生。"
+            },
+            {
+                id: 4,
+                english: "Atmosphere",
+                phonetic: "/ˈætməsfɪə(r)/",
+                chinese: "大氣層",
+                defEn: "The thick layer of gases surrounding the Earth's surface.",
+                defZh: "包圍着地球表面的厚厚氣體層。"
+            },
+            {
+                id: 5,
+                english: "Atmospheric Pressure",
+                phonetic: "/ˌætməsˈferɪk ˈpreʃə(r)/",
+                chinese: "大氣壓力",
+                defEn: "The pressure exerted by the weight of the atmosphere on unit area on Earth.",
+                defZh: "大氣層因重力作用施加於單位面積上的壓力。"
+            },
+            {
+                id: 6,
+                english: "Air Pressure",
+                phonetic: "/eə(r) ˈpreʃə(r)/",
+                chinese: "氣壓",
+                defEn: "The force created by air particles pushing against surfaces.",
+                defZh: "空氣粒子對物體表面施加的壓力。"
+            },
+            {
+                id: 7,
+                english: "Vacuum",
+                phonetic: "/ˈvækjuəm/",
+                chinese: "真空",
+                defEn: "A space with no air where internal air pressure is much lower than outside.",
+                defZh: "沒有空氣的空間，其內部氣壓遠低於外部。"
+            },
+            {
+                id: 8,
+                english: "Expand",
+                phonetic: "/ɪkˈspænd/",
+                chinese: "膨脹",
+                defEn: "To become larger in volume due to a rise in temperature.",
+                defZh: "受熱時物體的體積變大。"
+            },
+            {
+                id: 9,
+                english: "Contract",
+                phonetic: "/kənˈtrækt/",
+                chinese: "收縮",
+                defEn: "To become smaller in volume due to a drop in temperature.",
+                defZh: "受冷時物體的體積變小。"
+            },
+            {
+                id: 10,
+                english: "Wind",
+                phonetic: "/wɪnd/",
+                chinese: "風",
+                defEn: "Air in natural motion along the Earth's surface caused by flowing air.",
+                defZh: "空氣流動產生的自然氣流。"
+            },
+            {
+                id: 11,
+                english: "Temperature",
+                phonetic: "/ˈtemprətʃə(r)/",
+                chinese: "溫度",
+                defEn: "A measure of how hot or cold an object or air is.",
+                defZh: "衡量物體冷熱程度的物理量。"
+            },
+            {
+                id: 12,
+                english: "Weight",
+                phonetic: "/weɪt/",
+                chinese: "重量",
+                defEn: "The downward force acting on air due to gravity.",
+                defZh: "地心吸力對空氣或物體產生的向下作用力。"
+            },
+            {
+                id: 13,
+                english: "Take up Space",
+                phonetic: "/teɪk ʌp speɪs/",
+                chinese: "佔據空間",
+                defEn: "A key property showing air has volume and fills up containers.",
+                defZh: "空氣的基本性質，指空氣具有體積並佔據空間。"
+            },
+            {
+                id: 14,
+                english: "Liquid-in-glass thermometer",
+                phonetic: "/ˈlɪkwɪd ɪn ɡlɑːs θəˈmɒmɪtə(r)/",
+                chinese: "玻璃液體溫度計",
+                defEn: "A instrument using expansion and contraction of liquid to measure temperature.",
+                defZh: "利用液體熱脹冷縮原理測量溫度的工具。"
+            },
+            {
+                id: 15,
+                english: "Deflated",
+                phonetic: "/dɪˈfleɪtɪd/",
+                chinese: "放了氣的",
+                defEn: "Having air or gas released, weighing less than when filled.",
+                defZh: "裡面的空氣或氣體已被釋放。"
+            },
+            {
+                id: 16,
+                english: "Air-filled",
+                phonetic: "/eə(r) fɪld/",
+                chinese: "充氣的",
+                defEn: "Completely filled with air, weighing more than a deflated object.",
+                defZh: "充滿空氣的（如充氣排球重量高於放氣排球）。"
+            },
+            {
+                id: 17,
+                english: "Collision",
+                phonetic: "/kəˈlɪʒn/",
+                chinese: "碰撞",
+                defEn: "Crashing of objects together; cushioned by air pockets in bubble wrap.",
+                defZh: "物體撞擊；可透過泡泡紙等緩衝包裝減少損壞。"
+            },
+            {
+                id: 18,
+                english: "Volume",
+                phonetic: "/ˈvɒljuːm/",
+                chinese: "體積",
+                defEn: "The amount of 3D space occupied by air or a substance.",
+                defZh: "物體或氣體所佔據的三維空間大小。"
+            },
+            {
+                id: 19,
+                english: "Flow",
+                phonetic: "/fləʊ/",
+                chinese: "流動",
+                defEn: "Continuous movement of air from cooler high-pressure areas to warmer areas.",
+                defZh: "空氣由高壓區域向低壓區域持續移動的過程。"
+            },
+            {
+                id: 20,
+                english: "Hot Air",
+                phonetic: "/hɒt eə(r)/",
+                chinese: "熱空氣",
+                defEn: "Air that expands and rises upwards when heated by land.",
+                defZh: "受熱後體積膨脹、密度變小並上升的空氣。"
+            },
+            {
+                id: 21,
+                english: "Cold Air",
+                phonetic: "/kəʊld eə(r)/",
+                chinese: "冷空氣",
+                defEn: "Cooler air that sinks and moves horizontally to replace rising warm air.",
+                defZh: "冷卻後體積收縮、密度變大並下沉補充的空氣。"
+            },
+            {
+                id: 22,
+                english: "Components",
+                phonetic: "/kəmˈpəʊnənts/",
+                chinese: "成分",
+                defEn: "The different gases that make up the mixture of air.",
+                defZh: "組成空氣混合物的各種氣體成分。"
+            },
+            {
+                id: 23,
+                english: "Matter",
+                phonetic: "/ˈmætə(r)/",
+                chinese: "物質",
+                defEn: "Anything that has weight/mass and takes up space.",
+                defZh: "任何具有質量/重量並佔據空間的東西。"
+            },
+            {
+                id: 24,
+                english: "Changes",
+                phonetic: "/tʃeɪndʒɪz/",
+                chinese: "變化",
+                defEn: "Alterations in volume or density caused by heating or cooling.",
+                defZh: "受熱或受冷時體積或狀態發生的改變。"
+            },
+            {
+                id: 25,
+                english: "Pressure",
+                phonetic: "/ˈpreʃə(r)/",
+                chinese: "壓力",
+                defEn: "The continuous physical force exerted per unit area on an object.",
+                defZh: "作用於物體單位面積上的垂直力。"
+            },
+            {
+                id: 26,
+                english: "Vacuum Storage Bag",
+                phonetic: "/ˈvækjuəm ˈstɔːrɪdʒ bæɡ/",
+                chinese: "真空收納袋",
+                defEn: "A bag where air is sucked out so external atmospheric pressure flattens it.",
+                defZh: "抽走內部空氣後，利用外部大氣壓將其壓扁以節省空間的袋子。"
+            },
+            {
+                id: 27,
+                english: "Bubble Wrap",
+                phonetic: "/ˈbʌbl ræp/",
+                chinese: "氣泡紙 (泡泡紙)",
+                defEn: "Packaging material using trapped air bubbles to reduce impact damage.",
+                defZh: "利用封閉空氣的緩衝作用保護物品防撞的包裝材料。"
+            },
+            {
+                id: 28,
+                english: "Unit Area",
+                phonetic: "/ˈjuːnɪt ˈeəriə/",
+                chinese: "單位面積",
+                defEn: "A fixed standard measurement of surface area used to calculate pressure.",
+                defZh: "用於計算與定義壓力的標準表面面積單位。"
+            },
+            {
+                id: 29,
+                english: "Rise",
+                phonetic: "/raɪz/",
+                chinese: "上升",
+                defEn: "To move upward, characteristic of heated expanding air.",
+                defZh: "向上移動（如受熱膨脹的熱空氣上升）。"
+            },
+            {
+                id: 30,
+                english: "Drop",
+                phonetic: "/drɒp/",
+                chinese: "下降 / 降低",
+                defEn: "A decrease in temperature or pressure, or downward movement of cold air.",
+                defZh: "溫度、氣壓的降低，或空氣向下的移動。"
+            }
+        ];
+
+        // Global State Variables
+        let currentFlashcardIndex = 0;
+        let isFlipped = false;
+        
+        let gameDifficulty = 'easy'; // 'easy' (10), 'medium' (20), 'hard' (30)
+        let totalPairs = 10;
+        let selectedTermId = null;
+        let selectedDefId = null;
+        let matchedPairsCount = 0;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let gameActive = false;
+
+        // Initialize Web Speech API
+        const synth = window.speechSynthesis;
+
+        // On Page Load
+        window.onload = function() {
+            updateFlashcard();
+            initGame();
+        };
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            const btnFc = document.getElementById('tab-flashcards');
+            const btnGame = document.getElementById('tab-game');
+            const secFc = document.getElementById('section-flashcards');
+            const secGame = document.getElementById('section-game');
+
+            if (tab === 'flashcards') {
+                btnFc.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-blue-700 shadow-md";
+                btnGame.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 text-white hover:bg-white/10";
+                secFc.classList.remove('hidden');
+                secFc.classList.add('flex');
+                secGame.classList.add('hidden');
+                secGame.classList.remove('flex');
+            } else {
+                btnGame.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-blue-700 shadow-md";
+                btnFc.className = "px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 text-white hover:bg-white/10";
+                secGame.classList.remove('hidden');
+                secGame.classList.add('flex');
+                secFc.classList.add('hidden');
+                secFc.classList.remove('flex');
+            }
+        }
+
+        // ================= FLASHCARDS LOGIC =================
+        function updateFlashcard() {
+            const card = vocabularyData[currentFlashcardIndex];
+            
+            const inner = document.getElementById('flashcard-inner');
+            if (isFlipped) {
+                inner.classList.remove('rotate-y-180');
+                isFlipped = false;
+            }
+
+            setTimeout(() => {
+                document.getElementById('fc-english').innerText = card.english;
+                document.getElementById('fc-phonetic').innerText = card.phonetic;
+                document.getElementById('fc-chinese').innerText = card.chinese;
+                document.getElementById('fc-def-en').innerText = card.defEn;
+                document.getElementById('fc-def-zh').innerText = card.defZh;
+                document.getElementById('card-progress').innerText = `Card ${currentFlashcardIndex + 1} / ${vocabularyData.length}`;
+            }, 150);
+        }
+
+        function flipCard() {
+            const inner = document.getElementById('flashcard-inner');
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                inner.classList.add('rotate-y-180');
+            } else {
+                inner.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextCard() {
+            currentFlashcardIndex = (currentFlashcardIndex + 1) % vocabularyData.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            currentFlashcardIndex = (currentFlashcardIndex - 1 + vocabularyData.length) % vocabularyData.length;
+            updateFlashcard();
+        }
+
+        function shuffleFlashcards() {
+            vocabularyData.sort(() => Math.random() - 0.5);
+            currentFlashcardIndex = 0;
+            updateFlashcard();
+        }
+
+        function speakCurrentWord(e) {
+            e.stopPropagation();
+            if (!synth) return;
+            synth.cancel();
+            const word = vocabularyData[currentFlashcardIndex].english;
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            synth.speak(utterance);
+        }
+
+
+        // ================= MATCHING GAME LOGIC (Direct Select) =================
+        function setDifficulty(diff) {
+            gameDifficulty = diff;
+            const bEasy = document.getElementById('diff-easy');
+            const bMed = document.getElementById('diff-medium');
+            const bHard = document.getElementById('diff-hard');
+
+            const activeClass = "px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition bg-blue-600 text-white shadow";
+            const inactiveClass = "px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition bg-slate-100 text-slate-600 hover:bg-slate-200";
+
+            bEasy.className = diff === 'easy' ? activeClass : inactiveClass;
+            bMed.className = diff === 'medium' ? activeClass : inactiveClass;
+            bHard.className = diff === 'hard' ? activeClass : inactiveClass;
+
+            initGame();
+        }
+
+        function initGame() {
+            // Reset Stats
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            matchedPairsCount = 0;
+            selectedTermId = null;
+            selectedDefId = null;
+            gameActive = false;
+
+            totalPairs = gameDifficulty === 'easy' ? 10 : (gameDifficulty === 'medium' ? 20 : 30);
+
+            document.getElementById('game-timer').innerText = "00:00";
+            document.getElementById('game-score').innerText = `0 / ${totalPairs}`;
+
+            // Pick randomly selected items for current difficulty
+            const chosenVocab = [...vocabularyData].sort(() => Math.random() - 0.5).slice(0, totalPairs);
+
+            // Left side items (Terms)
+            const termsList = [...chosenVocab].sort(() => Math.random() - 0.5);
+            // Right side items (English Definitions)
+            const defsList = [...chosenVocab].sort(() => Math.random() - 0.5);
+
+            renderMatchLists(termsList, defsList);
+        }
+
+        function renderMatchLists(terms, defs) {
+            const termsContainer = document.getElementById('terms-list');
+            const defsContainer = document.getElementById('defs-list');
+
+            termsContainer.innerHTML = '';
+            defsContainer.innerHTML = '';
+
+            // Render Term Buttons
+            terms.forEach((item) => {
+                const termBtn = document.createElement('button');
+                termBtn.id = `term-btn-${item.id}`;
+                termBtn.onclick = () => selectTerm(item.id);
+                termBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition-all flex justify-between items-center bg-white border-slate-200 text-slate-700 hover:border-blue-300 shadow-sm`;
+                termBtn.innerHTML = `
+                    <span class="flex items-center gap-2">
+                        <i class="fa-regular fa-square text-slate-300 status-icon"></i>
+                        ${item.english}
+                    </span>
+                    <i class="fa-solid fa-volume-high text-xs text-slate-400 hover:text-blue-600 p-1" onclick="speakTerm(event, '${item.english}')" title="Listen"></i>
+                `;
+                termsContainer.appendChild(termBtn);
+            });
+
+            // Render Definition Buttons
+            defs.forEach((item) => {
+                const defBtn = document.createElement('button');
+                defBtn.id = `def-btn-${item.id}`;
+                defBtn.onclick = () => selectDef(item.id);
+                defBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-medium text-xs sm:text-sm leading-relaxed transition-all flex items-start gap-2.5 bg-white border-slate-200 text-slate-600 hover:border-cyan-300 shadow-sm`;
+                defBtn.innerHTML = `
+                    <i class="fa-regular fa-square text-slate-300 status-icon mt-0.5 shrink-0"></i>
+                    <span>${item.defEn}</span>
+                `;
+                defsContainer.appendChild(defBtn);
+            });
+        }
+
+        function speakTerm(e, text) {
+            e.stopPropagation();
+            if (!synth) return;
+            synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            synth.speak(utterance);
+        }
+
+        function startTimer() {
+            if (gameActive) return;
+            gameActive = true;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function selectTerm(id) {
+            startTimer();
+
+            // If already matched, ignore
+            const btn = document.getElementById(`term-btn-${id}`);
+            if (btn.classList.contains('matched')) return;
+
+            // Clear previously selected term styling if any
+            if (selectedTermId !== null) {
+                const prevBtn = document.getElementById(`term-btn-${selectedTermId}`);
+                if (prevBtn && !prevBtn.classList.contains('matched')) {
+                    prevBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition-all flex justify-between items-center bg-white border-slate-200 text-slate-700 hover:border-blue-300 shadow-sm`;
+                }
+            }
+
+            selectedTermId = id;
+            btn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition-all flex justify-between items-center bg-blue-50 border-blue-500 text-blue-800 shadow-md ring-2 ring-blue-300/50`;
+
+            checkMatch();
+        }
+
+        function selectDef(id) {
+            startTimer();
+
+            const btn = document.getElementById(`def-btn-${id}`);
+            if (btn.classList.contains('matched')) return;
+
+            // Clear previously selected definition styling if any
+            if (selectedDefId !== null) {
+                const prevBtn = document.getElementById(`def-btn-${selectedDefId}`);
+                if (prevBtn && !prevBtn.classList.contains('matched')) {
+                    prevBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-medium text-xs sm:text-sm leading-relaxed transition-all flex items-start gap-2.5 bg-white border-slate-200 text-slate-600 hover:border-cyan-300 shadow-sm`;
+                }
+            }
+
+            selectedDefId = id;
+            btn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-medium text-xs sm:text-sm leading-relaxed transition-all flex items-start gap-2.5 bg-cyan-50 border-cyan-500 text-cyan-900 shadow-md ring-2 ring-cyan-300/50`;
+
+            checkMatch();
+        }
+
+        function checkMatch() {
+            if (selectedTermId !== null && selectedDefId !== null) {
+                const termBtn = document.getElementById(`term-btn-${selectedTermId}`);
+                const defBtn = document.getElementById(`def-btn-${selectedDefId}`);
+
+                if (selectedTermId === selectedDefId) {
+                    // Match Correct!
+                    termBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition-all flex justify-between items-center bg-emerald-50 border-emerald-500 text-emerald-800 opacity-60 matched pointer-events-none`;
+                    defBtn.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-medium text-xs sm:text-sm leading-relaxed transition-all flex items-start gap-2.5 bg-emerald-50 border-emerald-500 text-emerald-800 opacity-60 matched pointer-events-none`;
+                    
+                    termBtn.querySelector('.status-icon').className = "fa-solid fa-square-check text-emerald-600";
+                    defBtn.querySelector('.status-icon').className = "fa-solid fa-square-check text-emerald-600";
+
+                    selectedTermId = null;
+                    selectedDefId = null;
+                    matchedPairsCount++;
+                    document.getElementById('game-score').innerText = `${matchedPairsCount} / ${totalPairs}`;
+
+                    if (matchedPairsCount === totalPairs) {
+                        onGameComplete();
+                    }
+                } else {
+                    // Match Wrong! Show red error effect
+                    const t = termBtn;
+                    const d = defBtn;
+                    
+                    t.classList.add('border-rose-500', 'bg-rose-50', 'animate-shake');
+                    d.classList.add('border-rose-500', 'bg-rose-50', 'animate-shake');
+
+                    setTimeout(() => {
+                        if (!t.classList.contains('matched')) {
+                            t.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-bold text-sm sm:text-base transition-all flex justify-between items-center bg-white border-slate-200 text-slate-700 hover:border-blue-300 shadow-sm`;
+                        }
+                        if (!d.classList.contains('matched')) {
+                            d.className = `w-full text-left p-3.5 sm:p-4 rounded-2xl border-2 font-medium text-xs sm:text-sm leading-relaxed transition-all flex items-start gap-2.5 bg-white border-slate-200 text-slate-600 hover:border-cyan-300 shadow-sm`;
+                        }
+                    }, 500);
+
+                    selectedTermId = null;
+                    selectedDefId = null;
+                }
+            }
+        }
+
+        function onGameComplete() {
+            clearInterval(timerInterval);
+            gameActive = false;
+
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+
+            document.getElementById('final-time').innerText = `${mins}:${secs}`;
+            document.getElementById('final-diff').innerText = `${gameDifficulty.toUpperCase()} (${totalPairs} PAIRS)`;
+
+            document.getElementById('modal-completion').classList.remove('hidden');
+        }
+
+        function closeModalAndRestart() {
+            document.getElementById('modal-completion').classList.add('hidden');
+            initGame();
+        }
+    </script>
+</body>
+</html>
