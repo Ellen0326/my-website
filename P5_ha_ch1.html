@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五年級人文科：預防意外與簡單急救 溫習大挑戰</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4;
+        }
+
+        /* Flashcard Flip 3D animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Matching Card Grid */
+        .match-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .match-card:hover {
+            transform: translateY(-2px);
+        }
+        .match-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        }
+        .match-card.matched {
+            opacity: 0.25;
+            pointer-events: none;
+            transform: scale(0.95);
+            filter: grayscale(80%);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header & Navigation -->
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2.5 rounded-2xl backdrop-blur-md">
+                    <i class="fa-solid fa-user-nurse text-2xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wide">小五人文科 溫習大挑戰</h1>
+                    <p class="text-xs text-emerald-100 font-medium">單元一 平安是福 — 第1課：預防意外與簡單急救</p>
+                </div>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex bg-emerald-800/60 p-1.5 rounded-xl border border-white/10 w-full sm:w-auto">
+                <button id="tab-flashcard" onclick="switchTab('flashcard')" class="flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 bg-white text-emerald-800 shadow">
+                    <i class="fa-solid fa-clone mr-2"></i>閃卡溫習 (30題)
+                </button>
+                <button id="tab-match" onclick="switchTab('match')" class="flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 text-emerald-100 hover:text-white">
+                    <i class="fa-solid fa-puzzle-piece mr-2"></i>配對遊戲
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+
+        <!-- ================= SECTION 1: FLASH CARD ================= -->
+        <section id="sec-flashcard" class="flex-1 flex flex-col items-center justify-between space-y-6">
+            
+            <!-- Top Controls & Progress Bar -->
+            <div class="w-full max-w-2xl bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 space-y-3">
+                <div class="flex justify-between items-center text-sm font-bold text-slate-600">
+                    <span id="fc-counter" class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">卡片 1 / 30</span>
+                    <div class="flex space-x-3 text-xs sm:text-sm">
+                        <span class="text-emerald-600"><i class="fa-solid fa-circle-check mr-1"></i>已學會: <span id="fc-learned-count">0</span></span>
+                        <span class="text-amber-600"><i class="fa-solid fa-circle-question mr-1"></i>需練習: <span id="fc-review-count">0</span></span>
+                    </div>
+                </div>
+                <!-- Progress bar -->
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                    <div id="fc-progress" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Flash Card Area -->
+            <div class="w-full max-w-2xl h-80 sm:h-96 perspective-1000 cursor-pointer" onclick="flipCard()">
+                <div id="fc-card" class="relative w-full h-full duration-500 transform-style-3d rounded-3xl shadow-xl border-4 border-white bg-white">
+                    
+                    <!-- Front (Question) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rounded-2xl bg-gradient-to-br from-white to-emerald-50/50 p-6 sm:p-8 flex flex-col justify-between items-center text-center">
+                        <div class="w-full flex justify-between items-center text-slate-400 text-xs sm:text-sm">
+                            <span class="bg-slate-100 px-3 py-1 rounded-full font-medium text-slate-500"><i class="fa-regular fa-lightbulb mr-1"></i>問題</span>
+                            <span>點擊卡片翻看答案 <i class="fa-solid fa-rotate mr-1"></i></span>
+                        </div>
+                        <div class="my-auto px-2">
+                            <h2 id="fc-question" class="text-xl sm:text-2xl font-bold text-slate-800 leading-relaxed">題目加載中...</h2>
+                        </div>
+                        <div class="text-xs text-emerald-600 font-semibold bg-emerald-100/60 px-4 py-1.5 rounded-full">
+                            小五人文單元一 ‧ 第1課
+                        </div>
+                    </div>
+
+                    <!-- Back (Answer) -->
+                    <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-inner">
+                        <div class="w-full flex justify-between items-center text-emerald-200 text-xs sm:text-sm">
+                            <span class="bg-emerald-800/60 px-3 py-1 rounded-full font-medium text-emerald-100"><i class="fa-solid fa-key mr-1"></i>參考答案</span>
+                            <span>點擊卡片翻回問題 <i class="fa-solid fa-rotate mr-1"></i></span>
+                        </div>
+                        <div class="my-auto px-2">
+                            <p id="fc-answer" class="text-xl sm:text-2xl font-black text-amber-300 leading-relaxed">答案加載中...</p>
+                        </div>
+                        <div id="fc-explanation" class="text-xs sm:text-sm text-emerald-100 bg-black/10 p-2.5 rounded-xl border border-white/10 w-full">
+                            筆記重點提醒
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Learning Status & Navigation Buttons -->
+            <div class="w-full max-w-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
+                
+                <!-- Status Tag Buttons -->
+                <div class="flex space-x-2 w-full sm:w-auto justify-center">
+                    <button id="btn-mark-learned" onclick="toggleLearned(event)" class="px-4 py-2.5 rounded-xl border-2 border-emerald-500 text-emerald-600 font-bold hover:bg-emerald-500 hover:text-white transition-all text-sm flex items-center">
+                        <i class="fa-regular fa-circle-check mr-2"></i>已學會
+                    </button>
+                    <button id="btn-mark-review" onclick="toggleReview(event)" class="px-4 py-2.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold hover:bg-amber-500 hover:text-white transition-all text-sm flex items-center">
+                        <i class="fa-regular fa-circle-question mr-2"></i>需練習
+                    </button>
+                </div>
+
+                <!-- Nav Buttons -->
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-center">
+                    <button onclick="prevCard(event)" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all text-sm shadow-sm">
+                        <i class="fa-solid fa-chevron-left mr-1"></i>上一張
+                    </button>
+                    <button onclick="shuffleCards(event)" class="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-all text-sm shadow-sm" title="隨機洗牌">
+                        <i class="fa-solid fa-shuffle"></i>
+                    </button>
+                    <button onclick="nextCard(event)" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-all text-sm shadow-md">
+                        下一張<i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= SECTION 2: MATCH GAME ================= -->
+        <section id="sec-match" class="hidden flex-1 flex flex-col space-y-4">
+            
+            <!-- Game Top Panel -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 flex flex-wrap justify-between items-center gap-4">
+                
+                <!-- Difficulty Selection -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-bold text-slate-600"><i class="fa-solid fa-layer-group text-emerald-600 mr-1"></i>難度：</span>
+                    <div class="inline-flex bg-slate-100 p-1 rounded-xl">
+                        <button id="diff-easy" onclick="setMatchDifficulty('easy')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white">簡單 (10條)</button>
+                        <button id="diff-medium" onclick="setMatchDifficulty('medium')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-emerald-700">普通 (20條)</button>
+                        <button id="diff-hard" onclick="setMatchDifficulty('hard')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-emerald-700">困難 (30條)</button>
+                    </div>
+                </div>
+
+                <!-- Game Stats Bar -->
+                <div class="flex items-center space-x-4 text-sm font-bold">
+                    <div class="bg-amber-50 text-amber-800 px-3 py-1.5 rounded-xl border border-amber-200">
+                        <i class="fa-regular fa-clock mr-1.5"></i>時間: <span id="game-timer">00:00</span>
+                    </div>
+                    <div class="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-xl border border-blue-200">
+                        <i class="fa-solid fa-shoe-prints mr-1.5"></i>步數: <span id="game-moves">0</span>
+                    </div>
+                    <div class="bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-xl border border-emerald-200">
+                        <i class="fa-solid fa-bullseye mr-1.5"></i>配對: <span id="game-progress">0/10</span>
+                    </div>
+                    <button onclick="startMatchGame()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow">
+                        <i class="fa-solid fa-rotate-right mr-1"></i>重新開始
+                    </button>
+                </div>
+            </div>
+
+            <!-- Match Grid Board -->
+            <div class="flex-1 bg-white/60 backdrop-blur p-4 rounded-2xl border border-slate-200 min-h-[400px]">
+                <div id="match-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    <!-- Cards will be generated dynamically -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Game Victory Modal -->
+    <div id="modal-result" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-5 border-4 border-emerald-400 animate-bounce-in">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+                <h3 class="text-2xl font-black text-slate-800">太棒了！挑戰成功！</h3>
+                <p class="text-sm text-slate-500 mt-1" id="modal-diff-text">完成了 簡單 (10條) 配對挑戰</p>
+            </div>
+            
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-2 gap-3 text-center">
+                <div>
+                    <span class="text-xs text-slate-400 block font-medium">總耗時</span>
+                    <span id="modal-time" class="text-xl font-black text-emerald-600">01:25</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block font-medium">總步數</span>
+                    <span id="modal-moves" class="text-xl font-black text-blue-600">14 次</span>
+                </div>
+            </div>
+
+            <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                <p id="modal-feedback" class="text-xs sm:text-sm font-bold text-emerald-800">恭喜你完全掌握了本課的急救與安全知識！急救小達人就是你！</p>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeModal()" class="flex-1 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-all text-sm">
+                    關閉
+                </button>
+                <button onclick="closeModal(); startMatchGame();" class="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all text-sm shadow-md">
+                    再玩一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Data and Controller -->
+    <script>
+        // Comprehensive 30-Question Knowledge Base for Chapter 1
+        const KB_DATA = [
+            { q: "燙傷/燒傷初步治理步驟一？", a: "用清水沖洗受傷部位10分鐘以上或至減輕痛楚", exp: "降溫能減輕痛楚並阻止熱力傷害皮膚深層。" },
+            { q: "燙傷/燒傷初步治理步驟二？", a: "用消毒敷料遮蓋受傷部位", exp: "保護傷口防止細菌感染。" },
+            { q: "燒烤用火安全注意事項？", a: "使用長柄工具並戴上膠手套", exp: "避免高溫煙霧與火苗直接燙傷雙手。" },
+            { q: "處理燒燙傷時，可以塗抹藥膏嗎？", a: "切勿在傷口上胡亂塗抹藥膏或醬油", exp: "胡亂塗抹可能會引致傷口感染或影響醫生診斷。" },
+            { q: "處理燒燙傷時，如何處理水泡？", a: "切勿弄穿水泡", exp: "水泡皮是天然的無菌保護膜，穿破容易感染。" },
+            { q: "處理燒燙傷時，可以直接用冰塊冰敷嗎？", a: "不要直接在傷口上放冰塊", exp: "極低溫會造成皮膚組織二次凍傷。" },
+            { q: "處理燒燙傷時，緊黏傷口的衣服怎麼辦？", a: "切勿脫去緊黏在傷口的衣服", exp: "強行撕下會撕裂皮膚，應剪去周圍衣物並及時求醫。" },
+            { q: "處理燒燙傷時，傷處的飾物（如手錶/指環）？", a: "應在傷患處腫起前及早除掉", exp: "避免患處腫脹後飾物勒緊血管造成組織壞死。" },
+            { q: "燒燙傷急救後，何時需要請醫生評估？", a: "傷口出現紅腫、痛楚增加或發燒時", exp: "這代表傷口可能已受細菌感染。" },
+            { q: "天氣乾燥為什麼容易引起流鼻血？", a: "天氣乾燥導致鼻黏膜破損而出血", exp: "鼻黏膜乾裂微血管容易破裂。" },
+            { q: "除了天氣乾燥，流鼻血還有哪些常見成因？", a: "鼻子受到撞擊或用手指用力挖鼻孔", exp: "外力撞擊與外力摩擦都會破壞微血管。" },
+            { q: "流鼻血時，正確的身體姿勢是什麼？", a: "保持冷靜坐下，頭微俯，身體微向前傾", exp: "切勿仰頭，避免血液倒流流入咽喉或胃部。" },
+            { q: "流鼻血時，應該捏住鼻子的哪個部位？", a: "捏住鼻骨下柔軟的部分", exp: "壓迫出血點（鼻中膈前下方的微血管網）。" },
+            { q: "流鼻血時，捏住鼻子需要持續多久？", a: "持續捏住10分鐘", exp: "持續按壓足夠時間才能使血液凝固止血。" },
+            { q: "流鼻血按壓止血時，應該如何呼吸？", a: "用口呼吸", exp: "捏住鼻子時改用嘴巴呼吸維持氣體交換。" },
+            { q: "流鼻血急救時，對衣物有什麼要求？", a: "用另一隻手解鬆緊束衣物", exp: "保持呼吸順暢，降低血液循環壓力。" },
+            { q: "處理擦傷或輕微割傷前，急救者應做什麼？", a: "應先戴上用後即棄的膠手套", exp: "避免用手直接接觸傷口或血液，防範交叉感染。" },
+            { q: "輕微割傷和擦傷的初步處理方法？", a: "用清水或消毒藥水清洗傷口，貼上消毒膠布", exp: "保持傷口清潔並封閉保護。" },
+            { q: "什麼情況下容易發生撞傷？", a: "走路時一邊玩手機/平板電腦或不留神", exp: "分心容易與物件或他人發生撞擊。" },
+            { q: "撞傷後出現內出血、紅腫痛熱，應如何急救？", a: "冷敷受傷部位，減輕腫脹和痛楚", exp: "冷敷能收縮血管，減少內出血與腫脹。" },
+            { q: "扭傷的常見成因是什麼？", a: "關節周圍的組織突然受到劇烈扭動", exp: "如貪玩跳樓梯失足扭傷腳踝。" },
+            { q: "扭傷患處的急救處理方法？", a: "把受傷部位托起，用冰墊冷敷患處", exp: "抬高患處減緩充血，冷敷減輕腫痛。" },
+            { q: "運動前應如何準備以降低受傷風險？", a: "穿着合適裝束並做熱身運動", exp: "提升肌肉與關節靈活性。" },
+            { q: "運動時如果感到身體不適，應該怎樣做？", a: "量力而為，立即停止並告訴老師", exp: "切勿勉強繼續運動以免加重傷害。" },
+            { q: "運動後應該做什麼幫助身體恢復？", a: "補充水分並做緩和運動", exp: "補充汗水流失，緩和運動加速代謝廢物排出。" },
+            { q: "走路與過馬路時的交通安全守則？", a: "留意路面不分心，使用過路設施並遵守燈號", exp: "提高警覺，防範交通事故。" },
+            { q: "乘坐巴士或港鐵時，站立要注意什麼？", a: "緊握扶手，不可在車廂內嬉戲", exp: "預防車輛急煞時跌倒撞傷。" },
+            { q: "乘坐交通工具時，對隨身物品有何安全提示？", a: "留意隨身物品有否被車門卡着", exp: "防止車門關閉時夾住物品造成危險。" },
+            { q: "同學在學校意外受傷時，你應該怎樣做？", a: "保持冷靜，立即找老師幫忙並送醫療室", exp: "展現仁愛與同理心，及時讓專業人員處理。" },
+            { q: "處理傷口的「消毒敷料」主要作用是什麼？", a: "遮蓋傷口，防範外界細菌感染", exp: "無菌敷料是急救包中的必備用品。" }
+        ];
+
+        // State variables
+        let currentTab = 'flashcard';
+        let fcIndex = 0;
+        let fcIsFlipped = false;
+        let fcLearned = new Set();
+        let fcReview = new Set();
+        let fcOrder = [...Array(KB_DATA.length).keys()];
+
+        // Match Game States
+        let matchDifficulty = 'easy'; // 'easy' (10), 'medium' (20), 'hard' (30)
+        let matchCards = [];
+        let selectedCards = [];
+        let matchedCount = 0;
+        let matchMoves = 0;
+        let matchTimer = null;
+        let matchSeconds = 0;
+        let isMatchGameActive = false;
+
+        // Initialize App
+        window.onload = function() {
+            updateFlashcardUI();
+            startMatchGame();
+        };
+
+        // Tab Switching
+        function switchTab(tab) {
+            currentTab = tab;
+            const fcTabBtn = document.getElementById('tab-flashcard');
+            const matchTabBtn = document.getElementById('tab-match');
+            const fcSec = document.getElementById('sec-flashcard');
+            const matchSec = document.getElementById('sec-match');
+
+            if (tab === 'flashcard') {
+                fcTabBtn.className = "flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 bg-white text-emerald-800 shadow";
+                matchTabBtn.className = "flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 text-emerald-100 hover:text-white";
+                fcSec.classList.remove('hidden');
+                fcSec.classList.add('flex');
+                matchSec.classList.add('hidden');
+                matchSec.classList.remove('flex');
+            } else {
+                matchTabBtn.className = "flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 bg-white text-emerald-800 shadow";
+                fcTabBtn.className = "flex-1 sm:flex-initial px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 text-emerald-100 hover:text-white";
+                matchSec.classList.remove('hidden');
+                matchSec.classList.add('flex');
+                fcSec.classList.add('hidden');
+                fcSec.classList.remove('flex');
+            }
+        }
+
+        // ================= FLASHCARD LOGIC =================
+        function updateFlashcardUI() {
+            const dataIndex = fcOrder[fcIndex];
+            const item = KB_DATA[dataIndex];
+
+            // Reset Card Flip first without animation jarring
+            const cardElem = document.getElementById('fc-card');
+            fcIsFlipped = false;
+            cardElem.classList.remove('rotate-y-180');
+
+            setTimeout(() => {
+                document.getElementById('fc-question').innerText = item.q;
+                document.getElementById('fc-answer').innerText = item.a;
+                document.getElementById('fc-explanation').innerText = "💡 筆記提示：" + item.exp;
+
+                // Counter & Progress
+                document.getElementById('fc-counter').innerText = `卡片 ${fcIndex + 1} / ${KB_DATA.length}`;
+                document.getElementById('fc-progress').style.width = `${((fcIndex + 1) / KB_DATA.length) * 100}%`;
+
+                // Badge status
+                document.getElementById('fc-learned-count').innerText = fcLearned.size;
+                document.getElementById('fc-review-count').innerText = fcReview.size;
+
+                // Button highlight states
+                const btnLearned = document.getElementById('btn-mark-learned');
+                const btnReview = document.getElementById('btn-mark-review');
+
+                if (fcLearned.has(dataIndex)) {
+                    btnLearned.className = "px-4 py-2.5 rounded-xl bg-emerald-500 text-white font-bold transition-all text-sm flex items-center shadow";
+                } else {
+                    btnLearned.className = "px-4 py-2.5 rounded-xl border-2 border-emerald-500 text-emerald-600 font-bold hover:bg-emerald-500 hover:text-white transition-all text-sm flex items-center";
+                }
+
+                if (fcReview.has(dataIndex)) {
+                    btnReview.className = "px-4 py-2.5 rounded-xl bg-amber-500 text-white font-bold transition-all text-sm flex items-center shadow";
+                } else {
+                    btnReview.className = "px-4 py-2.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold hover:bg-amber-500 hover:text-white transition-all text-sm flex items-center";
+                }
+            }, fcIsFlipped ? 150 : 0);
+        }
+
+        function flipCard() {
+            fcIsFlipped = !fcIsFlipped;
+            const cardElem = document.getElementById('fc-card');
+            if (fcIsFlipped) {
+                cardElem.classList.add('rotate-y-180');
+            } else {
+                cardElem.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextCard(e) {
+            e.stopPropagation();
+            if (fcIndex < KB_DATA.length - 1) {
+                fcIndex++;
+            } else {
+                fcIndex = 0; // loop back
+            }
+            updateFlashcardUI();
+        }
+
+        function prevCard(e) {
+            e.stopPropagation();
+            if (fcIndex > 0) {
+                fcIndex--;
+            } else {
+                fcIndex = KB_DATA.length - 1;
+            }
+            updateFlashcardUI();
+        }
+
+        function shuffleCards(e) {
+            e.stopPropagation();
+            for (let i = fcOrder.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [fcOrder[i], fcOrder[j]] = [fcOrder[j], fcOrder[i]];
+            }
+            fcIndex = 0;
+            updateFlashcardUI();
+        }
+
+        function toggleLearned(e) {
+            e.stopPropagation();
+            const dataIndex = fcOrder[fcIndex];
+            if (fcLearned.has(dataIndex)) {
+                fcLearned.delete(dataIndex);
+            } else {
+                fcLearned.add(dataIndex);
+                fcReview.delete(dataIndex);
+            }
+            updateFlashcardUI();
+        }
+
+        function toggleReview(e) {
+            e.stopPropagation();
+            const dataIndex = fcOrder[fcIndex];
+            if (fcReview.has(dataIndex)) {
+                fcReview.delete(dataIndex);
+            } else {
+                fcReview.add(dataIndex);
+                fcLearned.delete(dataIndex);
+            }
+            updateFlashcardUI();
+        }
+
+
+        // ================= MATCH GAME LOGIC =================
+        function setMatchDifficulty(diff) {
+            matchDifficulty = diff;
+            const btnEasy = document.getElementById('diff-easy');
+            const btnMedium = document.getElementById('diff-medium');
+            const btnHard = document.getElementById('diff-hard');
+
+            const inactiveClass = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-emerald-700";
+            const activeClass = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow";
+
+            btnEasy.className = diff === 'easy' ? activeClass : inactiveClass;
+            btnMedium.className = diff === 'medium' ? activeClass : inactiveClass;
+            btnHard.className = diff === 'hard' ? activeClass : inactiveClass;
+
+            startMatchGame();
+        }
+
+        function startMatchGame() {
+            // Reset states
+            clearInterval(matchTimer);
+            matchSeconds = 0;
+            matchMoves = 0;
+            matchedCount = 0;
+            selectedCards = [];
+            isMatchGameActive = true;
+
+            document.getElementById('game-timer').innerText = "00:00";
+            document.getElementById('game-moves').innerText = "0";
+
+            let itemCount = 10;
+            if (matchDifficulty === 'medium') itemCount = 20;
+            if (matchDifficulty === 'hard') itemCount = 30;
+
+            document.getElementById('game-progress').innerText = `0/${itemCount}`;
+
+            // Pick items
+            let shuffledKB = [...KB_DATA].sort(() => 0.5 - Math.random());
+            let selectedItems = shuffledKB.slice(0, itemCount);
+
+            // Create paired cards: Questions & Answers separately
+            let cardsData = [];
+            selectedItems.forEach((item, idx) => {
+                cardsData.push({ id: idx, type: 'Q', text: item.q, pairId: idx });
+                cardsData.push({ id: idx, type: 'A', text: item.a, pairId: idx });
+            });
+
+            // Shuffle paired cards
+            cardsData.sort(() => 0.5 - Math.random());
+            matchCards = cardsData;
+
+            // Render Grid
+            const grid = document.getElementById('match-grid');
+            grid.innerHTML = "";
+
+            cardsData.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = "match-card bg-white border-2 border-slate-200 rounded-xl p-3 flex flex-col justify-center items-center text-center cursor-pointer min-h-[90px] shadow-sm hover:border-emerald-400";
+                cardEl.dataset.index = index;
+                cardEl.dataset.pairId = card.pairId;
+                cardEl.dataset.type = card.type;
+
+                const badge = card.type === 'Q' 
+                    ? `<span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full mb-1">問題</span>`
+                    : `<span class="text-[10px] bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full mb-1">答案</span>`;
+
+                cardEl.innerHTML = `
+                    ${badge}
+                    <p class="text-xs sm:text-sm font-bold text-slate-700 leading-snug">${card.text}</p>
+                `;
+
+                cardEl.onclick = () => handleCardClick(cardEl, card, index);
+                grid.appendChild(cardEl);
+            });
+
+            // Start Timer
+            matchTimer = setInterval(() => {
+                matchSeconds++;
+                let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+                let s = (matchSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${m}:${s}`;
+            }, 1000);
+        }
+
+        function handleCardClick(cardEl, card, index) {
+            if (!isMatchGameActive) return;
+            if (cardEl.classList.contains('matched') || cardEl.classList.contains('selected')) return;
+            if (selectedCards.length >= 2) return;
+
+            // Select card
+            cardEl.classList.add('selected');
+            selectedCards.push({ element: cardEl, data: card });
+
+            if (selectedCards.length === 2) {
+                matchMoves++;
+                document.getElementById('game-moves').innerText = matchMoves;
+
+                const [card1, card2] = selectedCards;
+
+                // Check match condition: same pairId but different types (Q & A)
+                if (card1.data.pairId === card2.data.pairId && card1.data.type !== card2.data.type) {
+                    // Match Success
+                    setTimeout(() => {
+                        card1.element.classList.remove('selected');
+                        card2.element.classList.remove('selected');
+                        card1.element.classList.add('matched');
+                        card2.element.classList.add('matched');
+
+                        matchedCount++;
+                        let itemCount = matchDifficulty === 'easy' ? 10 : (matchDifficulty === 'medium' ? 20 : 30);
+                        document.getElementById('game-progress').innerText = `${matchedCount}/${itemCount}`;
+
+                        selectedCards = [];
+
+                        // Check Win
+                        if (matchedCount === itemCount) {
+                            handleGameWin();
+                        }
+                    }, 300);
+                } else {
+                    // Match Failed - shake and unselect
+                    setTimeout(() => {
+                        card1.element.classList.add('border-red-400', 'bg-red-50');
+                        card2.element.classList.add('border-red-400', 'bg-red-50');
+                    }, 200);
+
+                    setTimeout(() => {
+                        card1.element.classList.remove('selected', 'border-red-400', 'bg-red-50');
+                        card2.element.classList.remove('selected', 'border-red-400', 'bg-red-50');
+                        selectedCards = [];
+                    }, 800);
+                }
+            }
+        }
+
+        function handleGameWin() {
+            clearInterval(matchTimer);
+            isMatchGameActive = false;
+
+            let diffLabel = "簡單 (10條)";
+            if (matchDifficulty === 'medium') diffLabel = "普通 (20條)";
+            if (matchDifficulty === 'hard') diffLabel = "困難 (30條)";
+
+            let m = Math.floor(matchSeconds / 60).toString().padStart(2, '0');
+            let s = (matchSeconds % 60).toString().padStart(2, '0');
+
+            document.getElementById('modal-diff-text').innerText = `完成了 ${diffLabel} 配對挑戰`;
+            document.getElementById('modal-time').innerText = `${m}:${s}`;
+            document.getElementById('modal-moves').innerText = `${matchMoves} 次`;
+
+            // Dynamic feedback
+            let feedback = "太出色了！你對急救與安全守則非常熟悉！";
+            if (matchMoves <= matchedCount + 5) {
+                feedback = "記憶大師！你的配對準確率極高，安全急救知識滿分！";
+            }
+            document.getElementById('modal-feedback').innerText = feedback;
+
+            document.getElementById('modal-result').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-result').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

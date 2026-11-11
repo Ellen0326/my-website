@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5 人文 CH3 應對青春期的生理變化 - 互動溫習站</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0f9ff;
+        }
+
+        /* Flashcard Flip Animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">P5 人文 CH3 溫習站</h1>
+                    <p class="text-xs text-cyan-100">應對青春期的生理變化</p>
+                </div>
+            </div>
+            <!-- Mode Switcher Buttons -->
+            <div class="flex bg-black/20 p-1 rounded-xl mt-3 sm:mt-0 w-full sm:w-auto justify-center">
+                <button id="nav-flashcard" onclick="switchMode('flashcard')" class="px-5 py-2 rounded-lg font-medium transition duration-200 bg-white text-teal-700 shadow">
+                    <i class="fa-solid fa-[#008080] fa-layer-group mr-2"></i>問答 Flashcard
+                </button>
+                <button id="nav-match" onclick="switchMode('match')" class="px-5 py-2 rounded-lg font-medium transition duration-200 text-white hover:bg-white/10">
+                    <i class="fa-solid fa-puzzle-piece mr-2"></i>配對遊戲
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-6xl w-full mx-auto p-4 md:p-6">
+
+        <!-- SECTION 1: FLASHCARD MODE -->
+        <section id="flashcard-section" class="block space-y-6">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-teal-100 text-teal-800 font-bold px-3 py-1 rounded-full text-sm">
+                        卡片進度：<span id="card-index">1</span> / 30
+                    </span>
+                    <button onclick="toggleCardListModal()" class="text-sm text-teal-600 hover:text-teal-800 underline flex items-center">
+                        <i class="fa-solid fa-list mr-1"></i>查看全部題目
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="shuffleFlashcards()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-shuffle mr-1"></i>隨機排序
+                    </button>
+                    <button onclick="speakText()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-volume-high mr-1"></i>朗讀問題
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flashcard Display -->
+            <div class="flex justify-center items-center my-8">
+                <div class="w-full max-w-2xl h-80 md:h-96 perspective-1000 cursor-pointer" onclick="flipCard()">
+                    <div id="flashcard-inner" class="relative w-full h-full transform-style-3d transition-transform duration-500 shadow-xl rounded-3xl border-2 border-slate-100 bg-white">
+                        
+                        <!-- Front Face (Question) -->
+                        <div class="absolute inset-0 w-full h-full backface-hidden rounded-3xl p-6 md:p-10 flex flex-col justify-between bg-gradient-to-br from-white via-slate-50 to-teal-50/30">
+                            <div class="flex justify-between items-center">
+                                <span id="card-tag" class="text-xs font-bold uppercase tracking-wider text-teal-600 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
+                                    概念理解
+                                </span>
+                                <span class="text-xs text-slate-400">點擊卡片翻面看答案 <i class="fa-solid fa-rotate mr-1"></i></span>
+                            </div>
+                            <div class="my-auto text-center">
+                                <h3 id="card-question" class="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed">
+                                    載入中...
+                                </h3>
+                            </div>
+                            <div class="text-center text-xs text-slate-400">
+                                答案在背頁 ➔
+                            </div>
+                        </div>
+
+                        <!-- Back Face (Answer) -->
+                        <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-3xl p-6 md:p-10 flex flex-col justify-between bg-gradient-to-br from-teal-600 to-cyan-700 text-white">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold uppercase tracking-wider bg-white/20 text-white px-3 py-1 rounded-full">
+                                    正確答案 & 解析
+                                </span>
+                                <span class="text-xs text-teal-100"><i class="fa-solid fa-rotate mr-1"></i> 點擊翻回問題</span>
+                            </div>
+                            <div class="my-auto text-center">
+                                <p id="card-answer" class="text-xl md:text-2xl font-bold leading-relaxed">
+                                    載入中...
+                                </p>
+                            </div>
+                            <div class="text-center text-xs text-teal-200">
+                                記住了嗎？繼續加油！
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-center items-center space-x-4 max-w-md mx-auto">
+                <button onclick="prevCard()" class="flex-1 py-3 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 shadow-sm transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i> <span>上一條</span>
+                </button>
+                <button onclick="nextCard()" class="flex-1 py-3 px-5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold shadow-md shadow-teal-600/30 transition flex items-center justify-center space-x-2">
+                    <span>下一條</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 2: MATCH GAME MODE -->
+        <section id="match-section" class="hidden space-y-6">
+            
+            <!-- Game Header & Level Selector -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">挑戰配對遊戲</h2>
+                    <p class="text-xs text-slate-500">將「問題/情境」與相應的「正確答案/處理方法」點擊配對！</p>
+                </div>
+                
+                <!-- Level Selector -->
+                <div class="flex space-x-2 bg-slate-100 p-1.5 rounded-xl">
+                    <button id="lvl-easy" onclick="selectDifficulty('easy')" class="px-3 py-1.5 rounded-lg text-sm font-bold transition bg-emerald-500 text-white shadow-sm">
+                        🟢 容易 (10卡/5對)
+                    </button>
+                    <button id="lvl-medium" onclick="selectDifficulty('medium')" class="px-3 py-1.5 rounded-lg text-sm font-bold transition text-slate-600 hover:bg-white">
+                        🟡 普通 (20卡/10對)
+                    </button>
+                    <button id="lvl-hard" onclick="selectDifficulty('hard')" class="px-3 py-1.5 rounded-lg text-sm font-bold transition text-slate-600 hover:bg-white">
+                        🔴 困難 (30卡/15對)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Stats Bar -->
+            <div class="grid grid-cols-3 gap-4 max-w-xl mx-auto text-center">
+                <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <span class="text-xs text-slate-400 block">時間</span>
+                    <span id="game-timer" class="text-xl font-black text-teal-600">00:00</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <span class="text-xs text-slate-400 block">已配對</span>
+                    <span id="game-matches" class="text-xl font-black text-blue-600">0 / 5</span>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                    <span class="text-xs text-slate-400 block">嘗試次數</span>
+                    <span id="game-attempts" class="text-xl font-black text-amber-600">0</span>
+                </div>
+            </div>
+
+            <!-- Start / Restart Game Button -->
+            <div class="flex justify-center">
+                <button id="start-game-btn" onclick="initMatchGame()" class="px-8 py-3 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold rounded-2xl shadow-lg transition transform active:scale-95 flex items-center space-x-2">
+                    <i class="fa-solid fa-play"></i> <span>開始遊戲 / 重新洗牌</span>
+                </button>
+            </div>
+
+            <!-- Card Grid container -->
+            <div id="game-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 my-6">
+                <!-- Cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Completion Banner (Hidden by default) -->
+            <div id="game-complete-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+                <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-2xl border border-slate-100 transform transition-all scale-100">
+                    <div class="w-20 h-20 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                        🏆
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800">恭喜完成挑戰！</h3>
+                    <p class="text-slate-600 text-sm">你成功掌握了青春期生理變化的知識！</p>
+                    <div class="bg-slate-50 p-4 rounded-xl space-y-2 text-sm text-slate-700 border border-slate-100">
+                        <div class="flex justify-between"><span>難度級別：</span><span id="res-difficulty" class="font-bold">容易</span></div>
+                        <div class="flex justify-between"><span>所用時間：</span><span id="res-time" class="font-bold text-teal-600">00:00</span></div>
+                        <div class="flex justify-between"><span>總嘗試次數：</span><span id="res-attempts" class="font-bold text-blue-600">0 次</span></div>
+                    </div>
+                    <button onclick="closeCompleteModal()" class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md transition">
+                        再玩一次 🔄
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal for All Flashcards List -->
+    <div id="card-list-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="font-bold text-lg text-slate-800"><i class="fa-solid fa-list-check text-teal-600 mr-2"></i>全部 30 條溫習題目</h3>
+                <button onclick="toggleCardListModal()" class="text-slate-400 hover:text-slate-600 text-lg px-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="card-list-container" class="p-4 overflow-y-auto space-y-3 flex-1">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Section -->
+    <script>
+        // Full Question Bank (30 Items derived directly from P5 Humanities CH3 Courseware)
+        const flashcardData = [
+            { id: 1, category: "概念定義", q: "什麼是青春期？", a: "青春期是由兒童長大至成人的必經階段。" },
+            { id: 2, category: "發育差異", q: "每個人的成長和發育速度都一樣嗎？", a: "不一樣，每個人成長和發育的速度都有差別，踏入青春期的年齡因人而異。" },
+            { id: 3, category: "心理態度", q: "如果看到別的同學比自己早發育，應該怎樣看待？", a: "不必和別人比較或過份擔心，要以正面和平常心面對。" },
+            { id: 4, category: "女孩生理變化", q: "青春期女孩會經歷哪些主要的身體變化？", a: "胸部發育、開始有月經、顯著長高、臀部變寬等。" },
+            { id: 5, category: "男孩生理變化", q: "青春期男孩會經歷哪些主要的身體變化？", a: "長出鬍鬚、聲線變得低沉、可能會出現夢遺、顯著長高等。" },
+            { id: 6, category: "心理變化", q: "青春期男女在心理上會出現哪些變化？", a: "渴望獨立自主、更加注重自己的外表、情緒容易受荷爾蒙影響而波動。" },
+            { id: 7, category: "暗瘡成因", q: "什麼原因會導致青春期臉上容易長出暗瘡？", a: "油脂分泌增加、常吃刺激或油膩食物、壓力大、睡眠不足或不注意個人衛生。" },
+            { id: 8, category: "暗瘡應對", q: "要改善或紓緩暗瘡問題，應該養成什麼良好習慣？", a: "勤洗臉、注意飲食（少吃煎炸油膩物）、充足休息、保持心情開朗，嚴重時可按醫生指示塗藥膏。" },
+            { id: 9, category: "暗瘡禁忌", q: "長了暗瘡時，哪些行為是不正確的？", a: "用手擠壓暗瘡、用頭髮遮掩暗瘡、常吃煎炸刺激食物。" },
+            { id: 10, category: "體臭成因", q: "青春期為什麼容易出現體臭？", a: "青春期油脂和汗液分泌增加，汗液經皮膚上的細菌分解後容易產生異味。" },
+            { id: 11, category: "體臭預防", q: "勤洗澡對預防體臭有什麼好處？", a: "能有效清除皮膚上的細菌、汗液殘留和異味。" },
+            { id: 12, category: "體臭預防", q: "勤換衣物對改善體臭有什麼作用？", a: "能清除衣物上的細菌和汗液殘留。" },
+            { id: 13, category: "體臭預防", q: "使用止汗劑的作用是什麼？", a: "可以減少汗液分泌和細菌滋生。" },
+            { id: 14, category: "體臭預防", q: "多喝水和多吃蔬果對預防體臭有何幫助？", a: "多喝水能稀釋汗液；多吃蔬果促進排走體內廢物並補充水分。" },
+            { id: 15, category: "體臭預防", q: "常備毛巾或手帕有什麼好處？", a: "能及時擦乾汗液，保持身體乾爽。" },
+            { id: 16, category: "月經知識", q: "每次月經大概會排出多少血液？會否失血過多？", a: "排出的經血量約 50 至 150 毫升，因此不會失血過多。" },
+            { id: 17, category: "月經知識", q: "女性的經期通常持續多少天？", a: "經期平均由 3 天至 7 天不等，長短因人而異。" },
+            { id: 18, category: "月經衛生", q: "月經期間，衛生巾應該怎樣使用與處理？", a: "使用前後要清潔雙手；使用後要包好並放入垃圾箱。" },
+            { id: 19, category: "月經衛生", q: "月經期間在個人衛生方面要注意什麼？", a: "勤換衛生巾、保持身體清潔、確保充足睡眠與飲食均衡。" },
+            { id: 20, category: "經痛紓緩", q: "甚麼原因引起經痛？可以如何減輕？", a: "經痛是子宮收縮加劇引起。可用暖水袋敷下腹、沖暖水浴、喝熱飲及少吃生冷食物。" },
+            { id: 21, category: "月經情緒", q: "為什麼月經來臨前或期間容易情緒低落？", a: "因為體內荷爾蒙變化影響情緒，這是正常的現象。" },
+            { id: 22, category: "同理心關懷", q: "如果看到女同學的衣服被經血弄污，應該怎樣做？", a: "私下告訴老師或請另一位女同學提醒她更換，以正面和同理心對待。" },
+            { id: 23, category: "夢遺知識", q: "什麼是夢遺？", a: "夢遺是睡眠時不由自主的射精，屬於青春期的正常生理現象。" },
+            { id: 24, category: "夢遺成因", q: "什麼情況下較容易引致夢遺？", a: "睡覺時陰莖受到壓迫（例如俯睡、內褲過緊）時較容易發生。" },
+            { id: 25, category: "夢遺處理", q: "出現夢遺後，第一時間應該怎樣做？", a: "緊記儘快更換褲子/內褲並保持身體清潔。" },
+            { id: 26, category: "夢遺預防", q: "有哪些方法可以減少夢遺發生的頻率？", a: "採用側睡姿勢睡覺、穿較寬鬆舒適的內褲。" },
+            { id: 27, category: "生理困擾", q: "如果青春期的生理變化帶來嚴重困擾或不適，應該向誰求助？", a: "可以向醫生、父母或老師請教與求助。" },
+            { id: 28, category: "知識途徑", q: "想獲取青春期生理變化的正確知識，可以向哪些人請教？", a: "向可靠的成年人請教，如父母、老師、醫生。" },
+            { id: 29, category: "知識途徑", q: "哪些權威機構的網站提供可靠的性教育知識？", a: "香港家庭計劃指導會（家計會）、衞生署學生健康服務等官方網站。" },
+            { id: 30, category: "總結態度", q: "我們應該以什麼態度迎接青春期的各種變化？", a: "要以正面、樂觀、平常心的態度面對，並養成良好的健康生活習慣。" }
+        ];
+
+        // State variables
+        let currentCards = [...flashcardData];
+        let currentIndex = 0;
+        let isFlipped = false;
+
+        // Match Game State
+        let gameCards = [];
+        let selectedCards = [];
+        let matchedCount = 0;
+        let totalPairs = 5;
+        let attemptsCount = 0;
+        let gameTimer = null;
+        let secondsElapsed = 0;
+        let currentDifficulty = 'easy'; // 'easy' (5 pairs/10 cards), 'medium' (10 pairs/20 cards), 'hard' (15 pairs/30 cards)
+
+        // DOM elements
+        const cardIndexEl = document.getElementById('card-index');
+        const cardQuestionEl = document.getElementById('card-question');
+        const cardAnswerEl = document.getElementById('card-answer');
+        const cardTagEl = document.getElementById('card-tag');
+        const flashcardInner = document.getElementById('flashcard-inner');
+
+        // Initialize App
+        window.onload = () => {
+            renderFlashcard();
+            buildModalCardList();
+        };
+
+        // --- FLASHCARD LOGIC ---
+        function renderFlashcard() {
+            isFlipped = false;
+            flashcardInner.classList.remove('rotate-y-180');
+            
+            const card = currentCards[currentIndex];
+            cardIndexEl.innerText = currentIndex + 1;
+            cardQuestionEl.innerText = card.q;
+            cardAnswerEl.innerText = card.a;
+            cardTagEl.innerText = card.category;
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            if (isFlipped) {
+                flashcardInner.classList.add('rotate-y-180');
+            } else {
+                flashcardInner.classList.remove('rotate-y-180');
+            }
+        }
+
+        function nextCard() {
+            if (currentIndex < currentCards.length - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0; // loop back
+            }
+            renderFlashcard();
+        }
+
+        function prevCard() {
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = currentCards.length - 1;
+            }
+            renderFlashcard();
+        }
+
+        function shuffleFlashcards() {
+            currentCards = [...currentCards].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            renderFlashcard();
+        }
+
+        function speakText() {
+            const card = currentCards[currentIndex];
+            const textToSpeak = isFlipped ? card.a : card.q;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'zh-HK';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("你的瀏覽器不支援語音朗讀功能。");
+            }
+        }
+
+        function toggleCardListModal() {
+            const modal = document.getElementById('card-list-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function buildModalCardList() {
+            const container = document.getElementById('card-list-container');
+            container.innerHTML = flashcardData.map((card, idx) => `
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl hover:bg-teal-50 transition cursor-pointer" onclick="jumpToCard(${idx})">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-teal-600">第 ${idx + 1} 條 - ${card.category}</span>
+                        <span class="text-xs text-slate-400">點擊跳轉</span>
+                    </div>
+                    <p class="font-bold text-sm text-slate-800">問：${card.q}</p>
+                    <p class="text-xs text-slate-600 mt-1">答：${card.a}</p>
+                </div>
+            `).join('');
+        }
+
+        function jumpToCard(idx) {
+            currentIndex = idx;
+            renderFlashcard();
+            toggleCardListModal();
+        }
+
+        // --- MODE SWITCHER ---
+        function switchMode(mode) {
+            const flashcardNav = document.getElementById('nav-flashcard');
+            const matchNav = document.getElementById('nav-match');
+            const flashcardSec = document.getElementById('flashcard-section');
+            const matchSec = document.getElementById('match-section');
+
+            if (mode === 'flashcard') {
+                flashcardNav.className = "px-5 py-2 rounded-lg font-medium transition duration-200 bg-white text-teal-700 shadow";
+                matchNav.className = "px-5 py-2 rounded-lg font-medium transition duration-200 text-white hover:bg-white/10";
+                flashcardSec.classList.remove('hidden');
+                matchSec.classList.add('hidden');
+            } else {
+                matchNav.className = "px-5 py-2 rounded-lg font-medium transition duration-200 bg-white text-teal-700 shadow";
+                flashcardNav.className = "px-5 py-2 rounded-lg font-medium transition duration-200 text-white hover:bg-white/10";
+                matchSec.classList.remove('hidden');
+                flashcardSec.classList.add('hidden');
+                if(gameCards.length === 0) initMatchGame();
+            }
+        }
+
+        // --- MATCH GAME LOGIC ---
+        function selectDifficulty(level) {
+            currentDifficulty = level;
+            document.getElementById('lvl-easy').className = "px-3 py-1.5 rounded-lg text-sm font-bold transition " + (level==='easy' ? "bg-emerald-500 text-white shadow-sm" : "text-slate-600 hover:bg-white");
+            document.getElementById('lvl-medium').className = "px-3 py-1.5 rounded-lg text-sm font-bold transition " + (level==='medium' ? "bg-amber-500 text-white shadow-sm" : "text-slate-600 hover:bg-white");
+            document.getElementById('lvl-hard').className = "px-3 py-1.5 rounded-lg text-sm font-bold transition " + (level==='hard' ? "bg-red-500 text-white shadow-sm" : "text-slate-600 hover:bg-white");
+            
+            initMatchGame();
+        }
+
+        function initMatchGame() {
+            clearInterval(gameTimer);
+            secondsElapsed = 0;
+            attemptsCount = 0;
+            matchedCount = 0;
+            selectedCards = [];
+
+            if (currentDifficulty === 'easy') totalPairs = 5;
+            else if (currentDifficulty === 'medium') totalPairs = 10;
+            else totalPairs = 15;
+
+            document.getElementById('game-timer').innerText = "00:00";
+            document.getElementById('game-matches').innerText = `0 / ${totalPairs}`;
+            document.getElementById('game-attempts').innerText = "0";
+
+            // Randomly select N questions from flashcardData
+            const shuffledPool = [...flashcardData].sort(() => Math.random() - 0.5).slice(0, totalPairs);
+            
+            // Break each selected item into 2 cards: Question card & Answer card
+            let cardsArr = [];
+            shuffledPool.forEach(item => {
+                cardsArr.push({
+                    pairId: item.id,
+                    type: 'Q',
+                    text: item.q
+                });
+                cardsArr.push({
+                    pairId: item.id,
+                    type: 'A',
+                    text: item.a
+                });
+            });
+
+            // Shuffle the cards grid
+            gameCards = cardsArr.sort(() => Math.random() - 0.5);
+
+            renderGameGrid();
+            startTimer();
+        }
+
+        function startTimer() {
+            gameTimer = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function renderGameGrid() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = gameCards.map((card, index) => `
+                <div id="m-card-${index}" 
+                     onclick="handleCardClick(${index})"
+                     class="h-28 sm:h-36 p-3 bg-white border-2 border-slate-200 hover:border-teal-400 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center cursor-pointer transition transform active:scale-95 select-none relative overflow-hidden">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${card.type === 'Q' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">
+                        ${card.type === 'Q' ? '問題' : '答案'}
+                    </span>
+                    <p class="text-xs sm:text-sm font-bold text-slate-700 line-clamp-4 my-auto">
+                        ${card.text}
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        function handleCardClick(index) {
+            const cardEl = document.getElementById(`m-card-${index}`);
+
+            // Ignore clicked or matched cards
+            if (cardEl.classList.contains('bg-emerald-500') || cardEl.classList.contains('border-teal-500') || selectedCards.length >= 2) {
+                return;
+            }
+
+            // Check if already selected
+            if (selectedCards.some(item => item.index === index)) return;
+
+            // Highlight card
+            cardEl.classList.remove('border-slate-200');
+            cardEl.classList.add('border-teal-500', 'bg-teal-50', 'ring-2', 'ring-teal-300');
+
+            selectedCards.push({ index, card: gameCards[index] });
+
+            if (selectedCards.length === 2) {
+                attemptsCount++;
+                document.getElementById('game-attempts').innerText = attemptsCount;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = selectedCards;
+            const el1 = document.getElementById(`m-card-${card1.index}`);
+            const el2 = document.getElementById(`m-card-${card2.index}`);
+
+            if (card1.card.pairId === card2.card.pairId && card1.card.type !== card2.card.type) {
+                // SUCCESS MATCH
+                setTimeout(() => {
+                    el1.className = "h-28 sm:h-36 p-3 bg-emerald-500 text-white rounded-2xl shadow-md flex flex-col justify-center items-center text-center select-none opacity-90 transition transform scale-95";
+                    el2.className = "h-28 sm:h-36 p-3 bg-emerald-500 text-white rounded-2xl shadow-md flex flex-col justify-center items-center text-center select-none opacity-90 transition transform scale-95";
+                    
+                    el1.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1"></i><span class="text-xs font-bold">配對成功</span>`;
+                    el2.innerHTML = `<i class="fa-solid fa-circle-check text-2xl mb-1"></i><span class="text-xs font-bold">配對成功</span>`;
+
+                    matchedCount++;
+                    document.getElementById('game-matches').innerText = `${matchedCount} / ${totalPairs}`;
+                    selectedCards = [];
+
+                    if (matchedCount === totalPairs) {
+                        endGame();
+                    }
+                }, 400);
+
+            } else {
+                // MISMATCH
+                setTimeout(() => {
+                    el1.classList.add('border-red-500', 'bg-red-50', 'shake');
+                    el2.classList.add('border-red-500', 'bg-red-50', 'shake');
+
+                    setTimeout(() => {
+                        el1.className = "h-28 sm:h-36 p-3 bg-white border-2 border-slate-200 hover:border-teal-400 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center cursor-pointer transition transform active:scale-95 select-none relative overflow-hidden";
+                        el2.className = "h-28 sm:h-36 p-3 bg-white border-2 border-slate-200 hover:border-teal-400 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center cursor-pointer transition transform active:scale-95 select-none relative overflow-hidden";
+                        
+                        // Re-render original innerHTML
+                        el1.innerHTML = `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${card1.card.type === 'Q' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">
+                                ${card1.card.type === 'Q' ? '問題' : '答案'}
+                            </span>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 line-clamp-4 my-auto">${card1.card.text}</p>
+                        `;
+                        el2.innerHTML = `
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${card2.card.type === 'Q' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">
+                                ${card2.card.type === 'Q' ? '問題' : '答案'}
+                            </span>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 line-clamp-4 my-auto">${card2.card.text}</p>
+                        `;
+
+                        selectedCards = [];
+                    }, 600);
+
+                }, 400);
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameTimer);
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+
+            const diffText = currentDifficulty === 'easy' ? '🟢 容易 (10卡)' : (currentDifficulty === 'medium' ? '🟡 普通 (20卡)' : '🔴 困難 (30卡)');
+            
+            document.getElementById('res-difficulty').innerText = diffText;
+            document.getElementById('res-time').innerText = `${mins}:${secs}`;
+            document.getElementById('res-attempts').innerText = `${attemptsCount} 次`;
+
+            setTimeout(() => {
+                document.getElementById('game-complete-modal').classList.remove('hidden');
+            }, 500);
+        }
+
+        function closeCompleteModal() {
+            document.getElementById('game-complete-modal').classList.add('hidden');
+            initMatchGame();
+        }
+    </script>
+</body>
+</html>
