@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5 人文科 第2課「危機四伏」溫習與配對遊戲</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Victory Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f0fdf4;
+        }
+
+        /* 3D Flip Card Animation Styles */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Match game selection animations */
+        @keyframes pulse-select {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-select {
+            animation: pulse-select 1.5s infinite ease-in-out;
+        }
+
+        @keyframes shake-err {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake-err 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Header & Navigation Bar -->
+    <header class="bg-emerald-600 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2 rounded-xl text-2xl">
+                    🛡️
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">P5 人文科 溫習特訓</h1>
+                    <p class="text-xs text-emerald-100">第2課「危機四伏」 (安全與緊急應變)</p>
+                </div>
+            </div>
+
+            <!-- Tab Switching Buttons -->
+            <div class="flex bg-emerald-700/60 p-1 rounded-xl w-full sm:w-auto">
+                <button id="tab-flashcard-btn" onclick="switchTab('flashcard')" class="flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-clone"></i> 🎴 閃卡溫習區
+                </button>
+                <button id="tab-match-btn" onclick="switchTab('match')" class="flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-emerald-100 hover:text-white flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-puzzle-piece"></i> 🧩 配對遊戲區
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full flex flex-col">
+
+        <!-- SECTION 1: FLASHCARDS (閃卡區) -->
+        <section id="section-flashcard" class="space-y-6 flex-1 flex flex-col">
+            <!-- Learning Progress Dashboard -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-100 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold">
+                    <div class="flex items-center gap-2 text-emerald-700">
+                        <i class="fa-solid fa-chart-line"></i> 學習進度總覽
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+                        <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-emerald-500"></i> 已學會: <strong id="count-mastered">0</strong> / 30
+                        </span>
+                        <span class="bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> 需練習: <strong id="count-review">0</strong> / 30
+                        </span>
+                        <span class="bg-slate-50 text-slate-600 px-3 py-1 rounded-full border border-slate-200 flex items-center gap-1">
+                            未標記: <strong id="count-unmarked">30</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 h-3.5 rounded-full overflow-hidden flex">
+                    <div id="bar-mastered" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="bar-review" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Flash Card Viewer Window -->
+            <div class="flex-1 flex flex-col items-center justify-center min-h-[380px] sm:min-h-[420px]">
+                <div class="w-full max-w-2xl perspective-1000">
+                    <div id="flashcard-box" onclick="flipCard()" class="relative w-full h-80 sm:h-96 rounded-2xl shadow-md border border-slate-200/80 cursor-pointer transform-style-3d bg-white">
+                        
+                        <!-- Card Front (Question Side) -->
+                        <div class="absolute inset-0 w-full h-full backface-hidden rounded-2xl p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-br from-white to-emerald-50/50">
+                            <div class="flex justify-between items-center text-xs font-semibold text-emerald-600 border-b border-emerald-100 pb-3">
+                                <span class="bg-emerald-100/80 px-2.5 py-1 rounded-md text-emerald-800">
+                                    <i class="fa-solid fa-circle-question"></i> 問題 <span id="card-index-num">1</span> / 30
+                                </span>
+                                <span id="card-status-badge" class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-500">
+                                    未標記
+                                </span>
+                            </div>
+
+                            <div class="my-auto py-4 text-center">
+                                <h2 id="card-question" class="text-lg sm:text-2xl font-bold text-slate-800 leading-relaxed sm:leading-normal">
+                                    載入中...
+                                </h2>
+                            </div>
+
+                            <div class="text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-hand-pointer animate-bounce"></i> 點擊卡片任意位置查看答案
+                            </div>
+                        </div>
+
+                        <!-- Card Back (Answer & Highlight Side) -->
+                        <div class="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-2xl p-6 sm:p-8 flex flex-col justify-between bg-white border-2 border-emerald-500/20 shadow-inner">
+                            <div class="flex justify-between items-center text-xs font-semibold text-emerald-600 border-b border-slate-100 pb-3">
+                                <span class="bg-emerald-600 text-white px-2.5 py-1 rounded-md">
+                                    <i class="fa-solid fa-key"></i> 標準解答
+                                </span>
+                                <span class="text-slate-400">點擊任意處翻回正面</span>
+                            </div>
+
+                            <div class="my-auto py-3 space-y-4 text-left overflow-y-auto max-h-[220px] pr-2">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">【正確答案】</div>
+                                    <p id="card-answer" class="text-base sm:text-lg font-semibold text-slate-800 leading-relaxed">
+                                        解答載入中...
+                                    </p>
+                                </div>
+                                <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-200/80">
+                                    <p id="card-highlight" class="text-xs sm:text-sm text-amber-900 leading-relaxed">
+                                        💡 重點提醒：載入中...
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-xs text-emerald-600 font-medium">
+                                <i class="fa-solid fa-rotate-left"></i> 再次點擊翻回問題
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Status Action Buttons -->
+                <div class="w-full max-w-2xl mt-4 flex items-center justify-center gap-4">
+                    <button onclick="markStatus('mastered')" class="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check-circle text-lg"></i> ✅ 已學會
+                    </button>
+                    <button onclick="markStatus('review')" class="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-lg"></i> ⚠️ 需練習
+                    </button>
+                </div>
+
+                <!-- Card Navigation Control Toolbar -->
+                <div class="w-full max-w-2xl mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/60 pt-4">
+                    <div class="flex gap-2">
+                        <button onclick="prevCard()" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 active:scale-95 transition-all text-sm flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrow-left"></i> 上一張
+                        </button>
+                        <button onclick="nextCard()" class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 active:scale-95 transition-all text-sm flex items-center gap-1.5 shadow-sm">
+                            下一張 <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="randomCard()" class="px-3.5 py-2.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 font-medium hover:bg-purple-100 active:scale-95 transition-all text-sm flex items-center gap-1.5">
+                            <i class="fa-solid fa-shuffle"></i> 🔀 隨機抽卡
+                        </button>
+                        <button onclick="resetProgress()" class="px-3.5 py-2.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-medium hover:bg-rose-100 active:scale-95 transition-all text-sm flex items-center gap-1.5" title="重置學習進度">
+                            <i class="fa-solid fa-rotate"></i> 重置進度
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: MATCH GAME (配對遊戲區 - Direct Text 2-Column) -->
+        <section id="section-match" class="hidden space-y-5 flex-1 flex flex-col">
+            
+            <!-- Game Header & Controls -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-emerald-100 space-y-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    
+                    <!-- Difficulty Selector -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <span class="text-xs font-bold text-slate-500 uppercase">難度等級:</span>
+                        <div class="flex bg-slate-100 p-1 rounded-xl flex-1 sm:flex-none">
+                            <button id="diff-easy-btn" onclick="setDifficulty('easy')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white shadow-sm">
+                                🌱 容易 (10條)
+                            </button>
+                            <button id="diff-medium-btn" onclick="setDifficulty('medium')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all">
+                                ⚡ 普通 (20條)
+                            </button>
+                            <button id="diff-hard-btn" onclick="setDifficulty('hard')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all">
+                                🔥 困難 (30條)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Dashboard: Timer & Attempts -->
+                    <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto text-sm">
+                        <div class="bg-emerald-50 px-3.5 py-1.5 rounded-xl border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-2">
+                            <i class="fa-regular fa-clock text-emerald-600"></i>
+                            <span>用時: <strong id="match-timer" class="font-mono text-base">00:00</strong></span>
+                        </div>
+                        <div class="bg-blue-50 px-3.5 py-1.5 rounded-xl border border-blue-200 text-blue-800 font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-mouse-pointer text-blue-600"></i>
+                            <span>嘗試: <strong id="match-attempts" class="font-mono text-base">0</strong> 次</span>
+                        </div>
+                        <button onclick="initMatchGame()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs transition-all active:scale-95 flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrows-rotate"></i> 重新開局
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions Banner -->
+            <div class="bg-amber-50/80 border border-amber-200/70 rounded-xl px-4 py-2.5 text-xs text-amber-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-amber-600 text-sm"></i>
+                <span>玩法說明：點擊左側「問題卡」，再點擊右側相應的「答案卡」進行配對。文字已直接顯示於卡面！</span>
+            </div>
+
+            <!-- Two-Column Interactive Layout Container -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 flex-1 items-start">
+                
+                <!-- Left Column: Questions -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 class="text-sm font-bold text-slate-700 pb-2 border-b border-slate-100 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ❓ 左側問題欄
+                    </h3>
+                    <div id="questions-column" class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- Dynamic Question Cards -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Answers -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <h3 class="text-sm font-bold text-slate-700 pb-2 border-b border-slate-100 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> 💡 右側答案欄
+                    </h3>
+                    <div id="answers-column" class="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- Dynamic Answer Cards -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Victory Completion Modal -->
+    <div id="victory-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-5 animate-select border border-emerald-100">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+                🎉
+            </div>
+            <div>
+                <h3 class="text-2xl font-black text-slate-800">恭喜完成配對挑戰！</h3>
+                <p class="text-sm text-slate-500 mt-1">你已經順利掌握了 P5 人文科第2課危機應變知識！</p>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-2 gap-3 text-center">
+                <div class="bg-white p-3 rounded-xl border border-slate-200/60">
+                    <div class="text-xs text-slate-400 font-bold">總用時間</div>
+                    <div id="modal-time" class="text-xl font-black text-emerald-600 mt-0.5">00:00</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl border border-slate-200/60">
+                    <div class="text-xs text-slate-400 font-bold">嘗試配對</div>
+                    <div id="modal-attempts" class="text-xl font-black text-blue-600 mt-0.5">0 次</div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button onclick="closeVictoryModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-all">
+                    關閉
+                </button>
+                <button onclick="closeVictoryModal(); initMatchGame();" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20">
+                    再玩一次 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Core Script -->
+    <script>
+        // Full dataset (30 Q&A items based on P5 Humanities Chapter 2 Unit Content)
+        const masterData = [
+            { id: 1, q: "當身處樓層發生火警且逃生路線未受阻時，應該怎麼做？", a: "帶備「逃生三寶」，關上大門，利用樓梯迅速離家逃生，切勿使用升降機。", highlight: "逃生三寶包括手提電話、鑰匙、濕毛巾。" },
+            { id: 2, q: "逃生三寶是指哪三樣東西？", a: "手提電話、鑰匙、濕毛巾。", highlight: "濕毛巾可用於捂住口鼻防止吸入濃煙。" },
+            { id: 3, q: "逃生時如遇上濃煙，應如何移動？", a: "用濕毛巾掩着口鼻，伏地爬行。", highlight: "接近地面處空氣較清純、濃煙與毒氣較少。" },
+            { id: 4, q: "逃生時走廊或樓梯已被濃煙密佈，無法安全通過時該怎麼辦？", a: "折返家中或到其他安全單位躲避，關上大門，用膠紙和濕毛巾密封門邊縫隙，並致電999報警。", highlight: "切勿冒險穿過濃煙區。" },
+            { id: 5, q: "在家中被困等待救援時，應如何在窗戶或露台發出求救訊號？", a: "懸掛亮色被單或揮動毛巾。", highlight: "讓消防員容易辨識你的具體位置。" },
+            { id: 6, q: "為什麼在火警中吸入濃煙非常危險？", a: "濃煙溫度高且含有大量毒氣。", highlight: "吸入濃煙是火警致命的主要原因。" },
+            { id: 7, q: "平日應如何做好家居防火準備？", a: "保持走火通道暢通、防煙門常關、熟悉逃生路線。", highlight: "勿在樓梯或走廊堆放雜物。" },
+            { id: 8, q: "發現懷疑家居氣體洩漏時，首要處理步驟是什麼？", a: "先關掉氣體總開關，開窗通風，離開大廈後才打電話求救。", highlight: "切勿在室內使用任何開關或電話。" },
+            { id: 9, q: "發現氣體洩漏時，為什麼不能在室內開關電器或打電話？", a: "微小火花可能引爆積聚的氣體。", highlight: "電器開關產生的微弱火花極易引燃氣體。" },
+            { id: 10, q: "家中氣體爐具和管道應如何保養以預防洩漏？", a: "定期聘請專業合格人員檢查與維修。", highlight: "切勿自行拆卸或更換部件。" },
+            { id: 11, q: "消防處推廣的「應急三識」是什麼？", a: "識防火、識滅火、識逃生。", highlight: "加強個人應對突發災害的應變能力。" },
+            { id: 12, q: "遇人觸電時，首要應採取的安全行動是什麼？", a: "先切斷電源總開關，勿用手直接接觸傷者。", highlight: "可用絕緣物體（如乾木棒）將傷者與電源分離。" },
+            { id: 13, q: "輕微燙傷時的正確急救處置是什麼？", a: "用流動冷水沖洗傷口15-20分鐘。", highlight: "切勿塗抹牙膏、醬油或油脂。" },
+            { id: 14, q: "流鼻血時的正確止血姿勢是什麼？", a: "身體微向前傾，用手指捏住鼻翼兩側。", highlight: "切勿仰頭，避免血液倒流嗆入呼吸道。" },
+            { id: 15, q: "搭乘扶手電梯時應遵守什麼安全守則？", a: "緊握扶手、站定在黃線內、切勿在梯上奔跑玩耍。", highlight: "照顧同行長者與幼童。" },
+            { id: 16, q: "搬運重物時應採用什麼正確姿勢？", a: "屈膝蹲下、保持背部挺直、靠雙腿力量站起。", highlight: "避免直接彎腰抬重物以防腰部拉傷。" },
+            { id: 17, q: "參加大型活動時，入場後應先留意什麼？", a: "緊急出口的位置與安全逃生路線。", highlight: "與同行家人約定失散後的會合地點。" },
+            { id: 18, q: "香港警務處的主要職責是什麼？", a: "維持治安、防止及偵查罪案、保障市民生命財產。", highlight: "緊急求助電話為999。" },
+            { id: 19, q: "消防處救護員的主要職責是什麼？", a: "提供緊急救護服務、護送傷病者往醫院。", highlight: "迅速現場處理及途中的生命支援。" },
+            { id: 20, q: "醫療輔助隊的主要功能是什麼？", a: "在大型事故或災害時支援政府醫療救護服務。", highlight: "由志願人員組成的輔助應急部隊。" },
+            { id: 21, q: "民眾安全服務隊（民安隊）在緊急事件中扮演什麼角色？", a: "提供山嶺搜救、水災搶險及風災支援。", highlight: "支援政府各部門的緊急救援行動。" },
+            { id: 22, q: "聖約翰救傷機構的主要服務內容是什麼？", a: "提供急救培訓及大型活動的急救駐場服務。", highlight: "推廣急救知識與社會互助。" },
+            { id: 23, q: "防止虐待兒童會的功能是什麼？", a: "保護兒童權益、預防虐待兒童事件及提供家庭支援。", highlight: "關注兒童身心健康與安全成長。" },
+            { id: 24, q: "被困升降機（電梯）時應如何求救？", a: "按動警鐘或緊急求助按鈕，保持冷靜等待救援。", highlight: "切勿嘗試扒開梯門或強行爬出。" },
+            { id: 25, q: "家中電線破損或插座過載會引發什麼危險？", a: "易引致短路、觸電或電氣火災。", highlight: "避免在同一插座上使用過多高功率電器。" },
+            { id: 26, q: "使用滅火筒時應注意的「PASS」口訣是指什麼？", a: "拉開保險銷(Pull)、對準火源根部(Aim)、壓下把手(Squeeze)、左右掃射(Sweep)。", highlight: "僅適用於初期小火逃生輔助。" },
+            { id: 27, q: "遇上颱風或暴雨警告時，市民應採取什麼預防措施？", a: "留在安全室內、關緊門窗、遠離低窪水浸地區。", highlight: "密切留意天文台最新氣象報告。" },
+            { id: 28, q: "急救箱內常見的基礎用品包括哪些？", a: "消毒紗布、繃帶、消毒酒精、膠布及剪刀。", highlight: "應定期檢查並補充過期用品。" },
+            { id: 29, q: "大型活動散場遭遇擠擁時應如何安全避險？", a: "順著人流方向移動，保護胸腹，避免跌倒。", highlight: "切勿逆流而行或蹲下拾取物品。" },
+            { id: 30, q: "發現鄰居或公共走廊有懷疑危險品堆放時應怎麼做？", a: "立即通知大廈物業管理處或相關部門處理。", highlight: "切勿私自搬動或靠近不明危險物品。" }
+        ];
+
+        // Global State Variables
+        let currentTab = 'flashcard';
+        let cardIndex = 0;
+        let isFlipped = false;
+        let userStatus = {}; // { [id]: 'mastered' | 'review' }
+
+        // Match game state variables
+        let matchDifficulty = 'easy'; // 'easy' (10), 'medium' (20), 'hard' (30)
+        let selectedQuestionId = null;
+        let selectedAnswerId = null;
+        let matchedPairs = new Set();
+        let matchAttempts = 0;
+        let matchTimerInterval = null;
+        let matchSeconds = 0;
+        let isMatchGameActive = false;
+
+        // Initialize Application
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUserProgress();
+            renderCard();
+            updateProgressStats();
+        });
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            currentTab = tab;
+            const flashcardSection = document.getElementById('section-flashcard');
+            const matchSection = document.getElementById('section-match');
+            const flashcardBtn = document.getElementById('tab-flashcard-btn');
+            const matchBtn = document.getElementById('tab-match-btn');
+
+            if (tab === 'flashcard') {
+                flashcardSection.classList.remove('hidden');
+                matchSection.classList.add('hidden');
+                
+                flashcardBtn.className = "flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-2";
+                matchBtn.className = "flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-emerald-100 hover:text-white flex items-center justify-center gap-2";
+            } else {
+                flashcardSection.classList.add('hidden');
+                matchSection.classList.remove('hidden');
+
+                matchBtn.className = "flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-white text-emerald-700 shadow-sm flex items-center justify-center gap-2";
+                flashcardBtn.className = "flex-1 sm:flex-none px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-emerald-100 hover:text-white flex items-center justify-center gap-2";
+
+                if (!isMatchGameActive) {
+                    initMatchGame();
+                }
+            }
+        }
+
+        /* -------------------------------------------------------------
+           FLASHCARD LOGIC
+        ------------------------------------------------------------- */
+        function renderCard() {
+            const data = masterData[cardIndex];
+            const box = document.getElementById('flashcard-box');
+            
+            // Ensure card is non-flipped when loading new card
+            isFlipped = false;
+            box.classList.remove('rotate-y-180');
+
+            document.getElementById('card-index-num').innerText = cardIndex + 1;
+            document.getElementById('card-question').innerText = data.q;
+            document.getElementById('card-answer').innerText = data.a;
+            document.getElementById('card-highlight').innerText = `💡 重點提醒：${data.highlight}`;
+
+            updateCardBadge(data.id);
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            const box = document.getElementById('flashcard-box');
+            if (isFlipped) {
+                box.classList.add('rotate-y-180');
+            } else {
+                box.classList.remove('rotate-y-180');
+            }
+        }
+
+        function markStatus(status) {
+            const currentId = masterData[cardIndex].id;
+            userStatus[currentId] = status;
+            saveUserProgress();
+            updateCardBadge(currentId);
+            updateProgressStats();
+
+            // Auto-advance to next card smoothly
+            setTimeout(() => {
+                nextCard();
+            }, 300);
+        }
+
+        function updateCardBadge(id) {
+            const status = userStatus[id];
+            const badge = document.getElementById('card-status-badge');
+            if (status === 'mastered') {
+                badge.className = "px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-bold flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-600"></i> 已學會`;
+            } else if (status === 'review') {
+                badge.className = "px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center gap-1";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600"></i> 需練習`;
+            } else {
+                badge.className = "px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 font-medium";
+                badge.innerText = "未標記";
+            }
+        }
+
+        function nextCard() {
+            cardIndex = (cardIndex + 1) % masterData.length;
+            renderCard();
+        }
+
+        function prevCard() {
+            cardIndex = (cardIndex - 1 + masterData.length) % masterData.length;
+            renderCard();
+        }
+
+        function randomCard() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * masterData.length);
+            } while (newIndex === cardIndex && masterData.length > 1);
+            cardIndex = newIndex;
+            renderCard();
+        }
+
+        function resetProgress() {
+            if (confirm("確定要重置所有卡片的學習狀態與進度嗎？")) {
+                userStatus = {};
+                saveUserProgress();
+                updateProgressStats();
+                renderCard();
+            }
+        }
+
+        function updateProgressStats() {
+            let mastered = 0;
+            let review = 0;
+
+            Object.values(userStatus).forEach(st => {
+                if (st === 'mastered') mastered++;
+                if (st === 'review') review++;
+            });
+
+            const total = masterData.length;
+            const unmarked = total - mastered - review;
+
+            document.getElementById('count-mastered').innerText = mastered;
+            document.getElementById('count-review').innerText = review;
+            document.getElementById('count-unmarked').innerText = unmarked;
+
+            document.getElementById('bar-mastered').style.width = `${(mastered / total) * 100}%`;
+            document.getElementById('bar-review').style.width = `${(review / total) * 100}%`;
+        }
+
+        function saveUserProgress() {
+            try {
+                localStorage.setItem('p5_humanities_ch2_progress', JSON.stringify(userStatus));
+            } catch (e) {
+                console.warn('LocalStorage unavailable');
+            }
+        }
+
+        function loadUserProgress() {
+            try {
+                const stored = localStorage.getItem('p5_humanities_ch2_progress');
+                if (stored) {
+                    userStatus = JSON.parse(stored);
+                }
+            } catch (e) {
+                userStatus = {};
+            }
+        }
+
+
+        /* -------------------------------------------------------------
+           MATCH GAME LOGIC (Direct Text 2-Column Responsive Layout)
+        ------------------------------------------------------------- */
+        function setDifficulty(level) {
+            matchDifficulty = level;
+            
+            const easyBtn = document.getElementById('diff-easy-btn');
+            const medBtn = document.getElementById('diff-medium-btn');
+            const hardBtn = document.getElementById('diff-hard-btn');
+
+            [easyBtn, medBtn, hardBtn].forEach(btn => {
+                btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all";
+            });
+
+            if (level === 'easy') {
+                easyBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm";
+            } else if (level === 'medium') {
+                medBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm";
+            } else {
+                hardBtn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm";
+            }
+
+            initMatchGame();
+        }
+
+        function initMatchGame() {
+            // Determine number of pairs based on difficulty
+            let pairCount = 10;
+            if (matchDifficulty === 'medium') pairCount = 20;
+            if (matchDifficulty === 'hard') pairCount = 30;
+
+            // Reset Game Variables
+            selectedQuestionId = null;
+            selectedAnswerId = null;
+            matchedPairs.clear();
+            matchAttempts = 0;
+            document.getElementById('match-attempts').innerText = '0';
+
+            // Reset Timer
+            clearInterval(matchTimerInterval);
+            matchSeconds = 0;
+            document.getElementById('match-timer').innerText = '00:00';
+            startMatchTimer();
+
+            isMatchGameActive = true;
+
+            // Get slice of items & shuffle each column independently
+            const subset = masterData.slice(0, pairCount);
+            const questionsList = shuffleArray([...subset]);
+            const answersList = shuffleArray([...subset]);
+
+            // Render Questions Column
+            const qContainer = document.getElementById('questions-column');
+            qContainer.innerHTML = '';
+            questionsList.forEach(item => {
+                const card = document.createElement('div');
+                card.id = `q-card-${item.id}`;
+                card.className = "p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 cursor-pointer transition-all text-sm font-medium text-slate-800 shadow-sm hover:shadow flex items-start gap-3 select-none";
+                card.onclick = () => selectQuestionCard(item.id);
+                card.innerHTML = `
+                    <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">Q</span>
+                    <span class="leading-relaxed flex-1">${item.q}</span>
+                `;
+                qContainer.appendChild(card);
+            });
+
+            // Render Answers Column
+            const aContainer = document.getElementById('answers-column');
+            aContainer.innerHTML = '';
+            answersList.forEach(item => {
+                const card = document.createElement('div');
+                card.id = `a-card-${item.id}`;
+                card.className = "p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-400 cursor-pointer transition-all text-sm font-medium text-slate-800 shadow-sm hover:shadow flex items-start gap-3 select-none";
+                card.onclick = () => selectAnswerCard(item.id);
+                card.innerHTML = `
+                    <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">A</span>
+                    <span class="leading-relaxed flex-1">${item.a}</span>
+                `;
+                aContainer.appendChild(card);
+            });
+        }
+
+        function selectQuestionCard(id) {
+            if (matchedPairs.has(id)) return;
+
+            // If clicking already selected, toggle off
+            if (selectedQuestionId === id) {
+                selectedQuestionId = null;
+                updateMatchCardStyles();
+                return;
+            }
+
+            selectedQuestionId = id;
+            updateMatchCardStyles();
+            checkMatchAttempt();
+        }
+
+        function selectAnswerCard(id) {
+            if (matchedPairs.has(id)) return;
+
+            // If clicking already selected, toggle off
+            if (selectedAnswerId === id) {
+                selectedAnswerId = null;
+                updateMatchCardStyles();
+                return;
+            }
+
+            selectedAnswerId = id;
+            updateMatchCardStyles();
+            checkMatchAttempt();
+        }
+
+        function checkMatchAttempt() {
+            // Only evaluate if both sides selected
+            if (selectedQuestionId !== null && selectedAnswerId !== null) {
+                matchAttempts++;
+                document.getElementById('match-attempts').innerText = matchAttempts;
+
+                const qCard = document.getElementById(`q-card-${selectedQuestionId}`);
+                const aCard = document.getElementById(`a-card-${selectedAnswerId}`);
+
+                if (selectedQuestionId === selectedAnswerId) {
+                    // SUCCESS MATCH
+                    const matchId = selectedQuestionId;
+                    matchedPairs.add(matchId);
+
+                    // Green Lock Styling & Success Animation
+                    [qCard, aCard].forEach(card => {
+                        card.className = "p-3.5 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm flex items-start gap-3 select-none transition-all duration-300";
+                    });
+
+                    selectedQuestionId = null;
+                    selectedAnswerId = null;
+
+                    // Check Game Completion
+                    let targetCount = 10;
+                    if (matchDifficulty === 'medium') targetCount = 20;
+                    if (matchDifficulty === 'hard') targetCount = 30;
+
+                    if (matchedPairs.size === targetCount) {
+                        finishMatchGame();
+                    }
+
+                } else {
+                    // INCORRECT MATCH - Shake animation & Reset
+                    [qCard, aCard].forEach(card => {
+                        card.classList.add('border-rose-500', 'bg-rose-50', 'animate-shake');
+                    });
+
+                    const tempQ = selectedQuestionId;
+                    const tempA = selectedAnswerId;
+
+                    selectedQuestionId = null;
+                    selectedAnswerId = null;
+
+                    setTimeout(() => {
+                        const qElem = document.getElementById(`q-card-${tempQ}`);
+                        const aElem = document.getElementById(`a-card-${tempA}`);
+                        if (qElem) qElem.classList.remove('border-rose-500', 'bg-rose-50', 'animate-shake');
+                        if (aElem) aElem.classList.remove('border-rose-500', 'bg-rose-50', 'animate-shake');
+                        updateMatchCardStyles();
+                    }, 500);
+                }
+            }
+        }
+
+        function updateMatchCardStyles() {
+            let pairCount = 10;
+            if (matchDifficulty === 'medium') pairCount = 20;
+            if (matchDifficulty === 'hard') pairCount = 30;
+
+            const subset = masterData.slice(0, pairCount);
+
+            subset.forEach(item => {
+                const qCard = document.getElementById(`q-card-${item.id}`);
+                const aCard = document.getElementById(`a-card-${item.id}`);
+
+                if (matchedPairs.has(item.id)) return; // Keep matched green state
+
+                // Update Question Card Styling
+                if (qCard) {
+                    if (item.id === selectedQuestionId) {
+                        qCard.className = "p-3.5 rounded-xl border-2 border-emerald-600 bg-emerald-100/70 text-slate-900 font-semibold shadow-md flex items-start gap-3 select-none transition-all animate-select";
+                    } else {
+                        qCard.className = "p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 cursor-pointer transition-all text-sm font-medium text-slate-800 shadow-sm hover:shadow flex items-start gap-3 select-none";
+                    }
+                }
+
+                // Update Answer Card Styling
+                if (aCard) {
+                    if (item.id === selectedAnswerId) {
+                        aCard.className = "p-3.5 rounded-xl border-2 border-blue-600 bg-blue-100/70 text-slate-900 font-semibold shadow-md flex items-start gap-3 select-none transition-all animate-select";
+                    } else {
+                        aCard.className = "p-3.5 rounded-xl border border-slate-200 bg-white hover:border-blue-400 cursor-pointer transition-all text-sm font-medium text-slate-800 shadow-sm hover:shadow flex items-start gap-3 select-none";
+                    }
+                }
+            });
+        }
+
+        function startMatchTimer() {
+            matchTimerInterval = setInterval(() => {
+                matchSeconds++;
+                const mins = String(Math.floor(matchSeconds / 60)).padStart(2, '0');
+                const secs = String(matchSeconds % 60).padStart(2, '0');
+                document.getElementById('match-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function finishMatchGame() {
+            clearInterval(matchTimerInterval);
+            isMatchGameActive = false;
+
+            const finalTime = document.getElementById('match-timer').innerText;
+            document.getElementById('modal-time').innerText = finalTime;
+            document.getElementById('modal-attempts').innerText = `${matchAttempts} 次`;
+
+            document.getElementById('victory-modal').classList.remove('hidden');
+
+            // Trigger Confetti Fireworks
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function closeVictoryModal() {
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
+        // Helper Utility Function to Shuffle Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+    </script>
+</body>
+</html>

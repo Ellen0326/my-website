@@ -9,7 +9,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -18,7 +18,7 @@
             min-height: 100vh;
         }
 
-        /* 3D Card Flip Animation */
+        /* 3D Card Flip Animation for Flashcard */
         .perspective-1000 {
             perspective: 1000px;
         }
@@ -34,25 +34,42 @@
             transform: rotateY(180deg);
         }
 
-        /* Card Match Game Flip Style */
-        .game-card {
-            perspective: 600px;
+        /* Card Match Game Direct Selection Style */
+        .direct-card {
+            transition: all 0.2s ease-in-out;
         }
-        .game-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.4s;
-            transform-style: preserve-3d;
+        .direct-card.selected-q {
+            border-color: #059669 !important;
+            background-color: #ecfdf5 !important;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
         }
-        .game-card.flipped .game-card-inner {
-            transform: rotateY(180deg);
+        .direct-card.selected-a {
+            border-color: #0284c7 !important;
+            background-color: #f0f9ff !important;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
         }
-        .game-card.matched {
-            visibility: hidden;
+        .direct-card.wrong-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #e11d48 !important;
+            background-color: #ffe4e6 !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Fade Out Animated for Matched Pair */
+        .matched-fade {
             opacity: 0;
-            transition: visibility 0s 0.3s, opacity 0.3s linear;
+            transform: scale(0.9);
+            pointer-events: none;
+            transition: all 0.4s ease-out;
+            visibility: hidden;
         }
 
         /* Custom Scrollbar */
@@ -66,9 +83,6 @@
         ::-webkit-scrollbar-thumb {
             background: rgba(59, 130, 246, 0.5);
             border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(59, 130, 246, 0.8);
         }
     </style>
 </head>
@@ -95,7 +109,7 @@
                 </button>
                 <button id="btn-tab-match" onclick="switchMode('match')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg font-bold text-sm transition-all duration-200 text-slate-600 hover:text-slate-900">
                     <i class="fa-solid fa-puzzle-piece"></i>
-                    <span>Match Game 配對遊戲</span>
+                    <span>Match Game 直接配對</span>
                 </button>
             </div>
         </div>
@@ -193,17 +207,17 @@
         </section>
 
 
-        <!-- ================= MODE 2: MATCH GAME ================= -->
+        <!-- ================= MODE 2: MATCH GAME (DIRECT MATCH) ================= -->
         <section id="section-match" class="hidden space-y-6">
             
-            <!-- Difficulty Selection Dashboard (Shown before starting game) -->
+            <!-- Difficulty Selection Dashboard -->
             <div id="match-difficulty-screen" class="bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-10 shadow-lg border border-slate-100 text-center max-w-2xl mx-auto space-y-8">
                 <div>
                     <div class="inline-flex p-3 bg-teal-100 text-teal-700 rounded-2xl mb-3">
-                        <i class="fa-solid fa-gamepad text-3xl"></i>
+                        <i class="fa-solid fa-object-group text-3xl"></i>
                     </div>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800">選擇遊戲難度級別</h2>
-                    <p class="text-sm text-slate-500 mt-2">點擊翻牌，將相對應的「問題」與「答案」進行配對！</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800">直接配對遊戲 - 選擇級別</h2>
+                    <p class="text-sm text-slate-500 mt-2">問題與答案全部文字正面顯示！請點擊一張「題目卡」與一張「答案卡」進行配對。</p>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -217,7 +231,7 @@
                             <p class="text-xs text-slate-600">10 條題目配對</p>
                             <p class="text-xs font-bold text-emerald-600 mt-1">共 20 張卡片</p>
                         </div>
-                        <span class="mt-4 text-xs bg-emerald-600 text-white text-center py-1.5 rounded-lg font-bold">開始遊戲</span>
+                        <span class="mt-4 text-xs bg-emerald-600 text-white text-center py-2 rounded-lg font-bold">開始配對</span>
                     </button>
 
                     <!-- Medium -->
@@ -230,7 +244,7 @@
                             <p class="text-xs text-slate-600">20 條題目配對</p>
                             <p class="text-xs font-bold text-amber-600 mt-1">共 40 張卡片</p>
                         </div>
-                        <span class="mt-4 text-xs bg-amber-600 text-white text-center py-1.5 rounded-lg font-bold">開始遊戲</span>
+                        <span class="mt-4 text-xs bg-amber-600 text-white text-center py-2 rounded-lg font-bold">開始配對</span>
                     </button>
 
                     <!-- Hard -->
@@ -243,12 +257,12 @@
                             <p class="text-xs text-slate-600">30 條全題配對</p>
                             <p class="text-xs font-bold text-rose-600 mt-1">共 60 張卡片</p>
                         </div>
-                        <span class="mt-4 text-xs bg-rose-600 text-white text-center py-1.5 rounded-lg font-bold">挑戰全能</span>
+                        <span class="mt-4 text-xs bg-rose-600 text-white text-center py-2 rounded-lg font-bold">挑戰全能</span>
                     </button>
                 </div>
             </div>
 
-            <!-- In-Game Area (Hidden initially) -->
+            <!-- In-Game Play Area -->
             <div id="match-game-play-area" class="hidden space-y-4">
                 
                 <!-- Game Stats Header -->
@@ -263,14 +277,14 @@
                             <span id="game-timer" class="text-xl font-black text-slate-700 font-mono">00:00</span>
                         </div>
                         <div class="border-l border-slate-200 pl-6">
-                            <span class="text-xs text-slate-400 font-bold block uppercase">翻牌次數</span>
-                            <span id="game-flips" class="text-xl font-black text-amber-600">0</span>
+                            <span class="text-xs text-slate-400 font-bold block uppercase">嘗試配對次數</span>
+                            <span id="game-attempts" class="text-xl font-black text-amber-600">0</span>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <button onclick="resetMatchGame()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm px-4 py-2 rounded-xl transition">
-                            <i class="fa-solid fa-arrow-rotate-left mr-1"></i> 重置遊戲
+                            <i class="fa-solid fa-arrow-rotate-left mr-1"></i> 重置本局
                         </button>
                         <button onclick="showDifficultyScreen()" class="bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-sm px-4 py-2 rounded-xl border border-teal-200 transition">
                             切換難度
@@ -278,22 +292,52 @@
                     </div>
                 </div>
 
-                <!-- Game Grid -->
-                <div id="game-cards-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
-                    <!-- Cards dynamically inserted here -->
+                <!-- Guidance Banner -->
+                <div class="bg-amber-50/80 border border-amber-200 text-amber-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-hand-pointer text-amber-600 text-base"></i>
+                        <span>操作說明：請點選左邊的一張<b>題目卡</b>，再點選右邊相對應的<b>答案卡</b>進行消除。</span>
+                    </div>
+                    <span id="selection-status" class="font-bold text-teal-700 hidden sm:inline">請選擇卡片...</span>
                 </div>
+
+                <!-- Split Dual Columns Layout (Questions Left, Answers Right) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Left Column: Questions -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-emerald-800 text-sm flex items-center gap-2 bg-emerald-100/60 px-3 py-1.5 rounded-lg">
+                            <i class="fa-regular fa-circle-question"></i>
+                            <span>問題欄 (Questions)</span>
+                        </h3>
+                        <div id="grid-questions" class="space-y-2.5">
+                            <!-- Question Cards inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Answers -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-sky-800 text-sm flex items-center gap-2 bg-sky-100/60 px-3 py-1.5 rounded-lg">
+                            <i class="fa-solid fa-key"></i>
+                            <span>答案欄 (Answers)</span>
+                        </h3>
+                        <div id="grid-answers" class="space-y-2.5">
+                            <!-- Answer Cards inserted here -->
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Victory Modal / Congratulations Screen -->
+            <!-- Victory Modal -->
             <div id="victory-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6 transform animate-bounce-in">
+                <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6">
                     <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
-                        <i class="fa-solid fa-crown"></i>
+                        <i class="fa-solid fa-trophy"></i>
                     </div>
 
                     <div>
-                        <h3 class="text-2xl font-black text-slate-800">太棒了！挑戰成功！</h3>
-                        <p class="text-sm text-slate-500 mt-1">你已經熟練掌握本課的所有知識點！</p>
+                        <h3 class="text-2xl font-black text-slate-800">恭喜！完成配對！</h3>
+                        <p class="text-sm text-slate-500 mt-1">你成功完成了本課的所有知識點配對測試！</p>
                     </div>
 
                     <div class="bg-slate-50 rounded-2xl p-4 grid grid-cols-2 gap-4 border border-slate-100">
@@ -302,8 +346,8 @@
                             <span id="final-time" class="text-lg font-black text-teal-600 font-mono">00:00</span>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-bold block">總翻牌次數</span>
-                            <span id="final-flips" class="text-lg font-black text-amber-600">0</span>
+                            <span class="text-xs text-slate-400 font-bold block">嘗試次數</span>
+                            <span id="final-attempts" class="text-lg font-black text-amber-600">0</span>
                         </div>
                     </div>
 
@@ -324,43 +368,43 @@
 
     <!-- Footer -->
     <footer class="bg-white/60 border-t border-slate-200/60 py-4 text-center text-xs text-slate-400 mt-auto">
-        <p>小學五年級人文科 溫習互動平台 &copy; 2026 | 依據「踏上青春路」第4課教材內容編製</p>
+        <p>小學五年級人文科 溫習互動平台 &copy; 2026 | 依據「踏上青春路」第4課教材與工作紙編製</p>
     </footer>
 
     <!-- JavaScript Application Logic -->
     <script>
-        // ================= DATABASE: 30 Questions extracted strictly from Chapter 4 =================
+        // ================= DATABASE: 30 Questions strictly from Chapter 4 Curriculum & Worksheets =================
         const flashcardData = [
-            { id: 1, q: "青少年進入青春期後，心理變化是人人相同還是因人而異？", a: "青春期的心理變化是「因人而異」的。" },
-            { id: 2, q: "當青少年渴望獨立自主，容易與父母發生衝突時，應該怎樣做？", a: "設身處地了解父母想法，保持良好溝通，用合適方法表達自己。" },
-            { id: 3, q: "溝通三部曲的第一步是什麼？實踐要點有哪些？", a: "「耐心聆聽父母的話」：先聽對方說話，不打斷對方。" },
-            { id: 4, q: "溝通三部曲的第二步是什麼？實踐要點有哪些？", a: "「瞭解父母的想法」：易地而處，嘗試從對方的角度看事情。" },
-            { id: 5, q: "溝通三部曲的第三步是什麼？實踐要點有哪些？", a: "「清楚表達自己的意見並提出解決方法」：平靜真誠表達，不堅持己見，共同解決問題。" },
+            { id: 1, q: "進入青春期後，青少年的心理變化特徵有哪些？", a: "渴望獨立自主、對異性產生興趣、重視朋友認同、對性產生好奇、注重外表、喜歡參加集體活動。" },
+            { id: 2, q: "當青少年渴望獨立自主，容易因父母管束發生衝突時應如何應對？", a: "應設身處地了解父母想法，保持良好溝通，用合適方法表達自己。" },
+            { id: 3, q: "溝通三部曲的第一步是什麼？實踐要點是什麼？", a: "「耐心聆聽父母的話」：先聽對方說話，不打斷對方。" },
+            { id: 4, q: "溝通三部曲的第二步是什麼？實踐要點是什麼？", a: "「瞭解父母的想法」：易地而處，嘗試從對方的角度看事情。" },
+            { id: 5, q: "溝通三部曲的第三步是什麼？實踐要點是什麼？", a: "「清楚表達自己的意見並提出解決方法」：平靜真誠表達想法，不堅持己見，共同解決問題。" },
             { id: 6, q: "運用「溝通三部曲」與父母溝通有哪些好處？", a: "好處包括：減少誤會、拉近雙方的距離、解決問題。" },
             { id: 7, q: "青少年可以怎樣做，讓父母相信自己已經成長並減少管束？", a: "做個負責任的人，例如「主動交代行蹤」和「說到做到」。" },
-            { id: 8, q: "當與父母的衝突無法即時解決時，暫時停止討論的好處是什麼？", a: "給自己和對方冷靜的時間，避免因衝動而說出傷害對方的話。" },
-            { id: 9, q: "當衝突無法解決時，寫日記或繪畫有什麼幫助？", a: "寫日記能抒發感受和清理想法；繪畫能放鬆心情，保持情緒平靜。" },
-            { id: 10, q: "當衝突無法解決時，向可信任的人（如學校社工）傾訴有何好處？", a: "能疏導負面情緒，感到被理解支持，並獲得實質協助或意見。" },
-            { id: 11, q: "父母經常關注與提醒我們的學業或生活，是出於什麼原因？", a: "父母的操心是出於對我們的關心與愛護。" },
-            { id: 12, q: "對於父母的關心與心意，我們應該抱着什麼態度？", a: "我們要珍惜並表達感恩之情，更要關心和體貼父母作為回報。" },
-            { id: 13, q: "青春期青少年在朋友相處上有哪些心理特徵？", a: "喜歡參加群體活動，重視朋友的認同與自己言行的看法。" },
-            { id: 14, q: "與朋友相處時，如果朋友要求我們做不當的事情，該怎麼辦？", a: "要懂得堅決拒絕，不應受朋友的不良影響。" },
-            { id: 15, q: "與朋友出現意見分歧時，適當的態度是什麼？", a: "互相尊重，坦白表達意見，同時願意聆聽並尊重對方決定。" },
-            { id: 16, q: "朋友感到失落或遇到困難時，我們應該如何相處？", a: "主動幫忙、開解情緒，並適時提點對方的錯誤。" },
-            { id: 17, q: "網上交友存在什麼潛在風險？", a: "網友未必可信，可能提供虛假資訊、誘騙外出甚至進行性侵犯。" },
-            { id: 18, q: "應對網上交友與網友邀約時，正確的做法是什麼？", a: "不要隨便在網上交友，更要避免答應網友的邀約，提高警覺。" },
-            { id: 19, q: "外出玩耍或赴約時，如何讓家人安心？", a: "告訴家人活動的地點和時間，讓家人知道行蹤，萬一發生意外也能獲救。" },
-            { id: 20, q: "當同學邀請前往陌生環境或與不熟悉的人交往時該如何處理？", a: "考慮對方提及的地方是否陌生、是否接觸陌生人，若是應堅決拒絕。" },
-            { id: 21, q: "青春期與異性朋友相處時，應該保持怎樣的態度？", a: "態度誠懇、舉止大方，彼此位置平等，互相尊重。" },
-            { id: 22, q: "與異性朋友相處時，在行為與距離上要注意什麼？", a: "保持適當的距離，避免單獨約會，避免混淆友情和愛情。" },
-            { id: 23, q: "什麼是「性騷擾」的定義？", a: "性騷擾是一種不受歡迎、不被接納而帶有性意識的言行，令人感到冒犯或不安。" },
-            { id: 24, q: "性騷擾的常見形式包含哪三種？", a: "身體接觸、言語接觸、非言語行為。" },
-            { id: 25, q: "什麼屬於「身體接觸」形式的性騷擾？", a: "不必要或故意接觸他人的身體或私密部位。" },
-            { id: 26, q: "什麼屬於「言語接觸」與「非言語行為」形式的性騷擾？", a: "言語：談論性話題；非言語：帶性意味盯視、性暗示動作、吹口哨、展示色情物品。" },
-            { id: 27, q: "當自己遇到性騷擾時，第一時間應該如何應對？", a: "清楚而堅定地說「不」，告知對方：「你這樣是性騷擾，是不對的！」" },
-            { id: 28, q: "遇到性騷擾並堅決拒絕後，下一步應該怎麼做？", a: "儘快離開現場，逃到安全的地方，向可信任的成年人（家長/老師）求助。" },
-            { id: 29, q: "如果親眼看見別人正在被性騷擾，我們應該如何協助？", a: "制止性騷擾行為、安慰受害者，並在需要時成為目擊證人指認犯人。" },
-            { id: 30, q: "法律與社會規範對未成年人在保護自己免受傷害上有何保障？", a: "未成年人有權受到保護不受傷害；遇到侵犯要保持冷靜並及時求助。" }
+            { id: 8, q: "與家人融洽相處時，是否應該避免與家人談話？", a: "不應該避免談話，應該主動交流並保持良好溝通。" },
+            { id: 9, q: "當與父母的衝突無法即時解決時，暫時停止討論的好處是什麼？", a: "給自己和對方冷靜的時間，保持情緒平靜，避免因衝動說出傷害人的話。" },
+            { id: 10, q: "當衝突無法解決時，向可信任的人（如學校社工/老師）傾訴有何好處？", a: "能疏導負面情緒，感到被理解支持，並獲得實質協助或建議。" },
+            { id: 11, q: "寫日記或繪畫對於抒發情緒有什麼作用？", a: "寫日記能抒發感受和清理想法；繪畫能放鬆心情，保持情緒平靜。" },
+            { id: 12, q: "父母經常關注與提醒我們的學業或生活，是出於什麼原因？", a: "父母的操心和提醒是出於對我們的關心與愛護。" },
+            { id: 13, q: "對於父母的關心與心意，我們應該抱着什麼態度？", a: "我們要珍惜並表達感恩之情，更要關心和體貼父母作為回報。" },
+            { id: 14, q: "與朋友相處時，如果朋友提出不當要求（如抄功課/搖動夾公仔機），該怎麼辦？", a: "要懂得堅決拒絕，不應受朋友的不良影響。" },
+            { id: 15, q: "為什麼我們不應該抄功課，而應該認真做功課？", a: "抄功課是不對的，做功課能讓我們複習在課堂學習的知識。" },
+            { id: 16, q: "大家一起溫習課業有什麼好處？", a: "可以互相鞭策、討論與提點，達到「教學相長」的效果。" },
+            { id: 17, q: "與朋友出現意見分歧時，適當的態度是什麼？", a: "互相尊重，坦白表達意見，同時願意聆聽並尊重對方想法與決定。" },
+            { id: 18, q: "朋友感到失落、困擾或犯錯時，我們應該如何處理？", a: "主動幫忙、開解情緒，並在朋友犯錯時主動提點。" },
+            { id: 19, q: "為什麼我們要謹慎看待網上交友？", a: "網友未必可信，可能提供虛假資訊，甚至誘騙外出進行性侵犯。" },
+            { id: 20, q: "輕信網友並答應邀約可能帶來什麼危險？", a: "網友可能假裝有共同喜好或提供虛假資訊，應約容易發生意外危險。" },
+            { id: 21, q: "當遇到涉及陌生人或陌生環境的邀約時，該如何確保安全？", a: "提高警覺，堅決拒絕前往；外出活動時要告訴家人地點與行蹤。" },
+            { id: 22, q: "與異性朋友相處時，應該保持怎樣的態度與原則？", a: "態度誠懇大方，地位平等互相尊重，保持適當距離，避免單獨約會。" },
+            { id: 23, q: "如果與異性成為好朋友卻被人取笑喜歡對方，該怎樣回應？", a: "認真指出我不喜歡被人取笑與朋友的關係，並要求對方停止取笑。" },
+            { id: 24, q: "什麼是「性騷擾」的定義？", a: "性騷擾是一種不受歡迎、不被接納而帶有性意識的言行，令人感到冒犯或不安。" },
+            { id: 25, q: "性騷擾行為可以分為哪三種形式？", a: "身體接觸、言語接觸、非言語行為。" },
+            { id: 26, q: "什麼屬於「身體接觸」形式的性騷擾？", a: "不必要或故意接觸他人的身體或私密部位。" },
+            { id: 27, q: "什麼屬於「言語接觸」與「非言語行為」形式的性騷擾？", a: "言語：談論性話題或打擾；非言語：帶性意味盯視、吹口哨、展示色情物品。" },
+            { id: 28, q: "如果遇到性騷擾，我們應該怎樣應對？", a: "保持冷靜，清楚堅決拒絕，並向可信任的成年人（家長/老師）求助。" },
+            { id: 29, q: "如果親眼看見別人正在被性騷擾，我們應該如何協助？", a: "制止性騷擾行為、安慰受害者，並在需要時告知老師或警方成為目擊證人。" },
+            { id: 30, q: "未成年人在保護自己免受傷害上有什麼權益與認知？", a: "未成年人有權受到保護不受傷害；遇到侵犯要保持冷靜並及時求助。" }
         ];
 
         // ================= STATE MANAGEMENT =================
@@ -368,12 +412,13 @@
         let isCardFlipped = false;
         let soundEnabled = true;
 
-        // Match Game State
-        let gameCards = [];
-        let flippedCards = [];
+        // Direct Match Game State
+        let currentDifficulty = 'easy';
+        let selectedQuestionCard = null;
+        let selectedAnswerCard = null;
         let matchedPairsCount = 0;
         let totalPairs = 0;
-        let flipsCount = 0;
+        let attemptsCount = 0;
         let timerInterval = null;
         let secondsElapsed = 0;
         let isProcessing = false;
@@ -388,24 +433,23 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
 
-                if (type === 'flip') {
-                    osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                if (type === 'select') {
+                    osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.08);
+                    osc.stop(audioCtx.currentTime + 0.05);
                 } else if (type === 'match') {
                     osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
+                    osc.stop(audioCtx.currentTime + 0.2);
                 } else if (type === 'wrong') {
-                    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-                    osc.frequency.setValueAtTime(200, audioCtx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(280, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
                     gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
                     osc.start();
                     osc.stop(audioCtx.currentTime + 0.2);
@@ -417,10 +461,10 @@
                         o.connect(g);
                         g.connect(audioCtx.destination);
                         o.frequency.value = freq;
-                        g.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.1);
-                        g.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.1 + 0.2);
-                        o.start(audioCtx.currentTime + idx * 0.1);
-                        o.stop(audioCtx.currentTime + idx * 0.1 + 0.2);
+                        g.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.08);
+                        g.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.08 + 0.2);
+                        o.start(audioCtx.currentTime + idx * 0.08);
+                        o.stop(audioCtx.currentTime + idx * 0.08 + 0.2);
                     });
                 }
             } catch (e) {
@@ -438,7 +482,7 @@
             }
         }
 
-        // ================= MODE SWITCHING =================
+        // Mode Switching
         function switchMode(mode) {
             const tabFc = document.getElementById('btn-tab-flashcard');
             const tabMatch = document.getElementById('btn-tab-match');
@@ -463,7 +507,6 @@
             const cardData = flashcardData[currentFlashcardIndex];
             const inner = document.getElementById('flashcard-inner');
             
-            // Unflip first if already flipped
             if (isCardFlipped) {
                 inner.classList.remove('rotate-y-180');
                 isCardFlipped = false;
@@ -480,7 +523,7 @@
         }
 
         function flipCard() {
-            playSound('flip');
+            playSound('select');
             const inner = document.getElementById('flashcard-inner');
             isCardFlipped = !isCardFlipped;
             if (isCardFlipped) {
@@ -509,9 +552,7 @@
             updateFlashcardUI();
         }
 
-        // ================= MATCH GAME LOGIC =================
-        let currentDifficulty = 'easy';
-
+        // ================= DIRECT MATCH GAME LOGIC =================
         function showDifficultyScreen() {
             clearInterval(timerInterval);
             document.getElementById('match-difficulty-screen').classList.remove('hidden');
@@ -527,9 +568,10 @@
 
             totalPairs = pairCount;
             matchedPairsCount = 0;
-            flipsCount = 0;
+            attemptsCount = 0;
             secondsElapsed = 0;
-            flippedCards = [];
+            selectedQuestionCard = null;
+            selectedAnswerCard = null;
             isProcessing = false;
 
             document.getElementById('match-difficulty-screen').classList.add('hidden');
@@ -537,60 +579,57 @@
             document.getElementById('victory-modal').classList.add('hidden');
 
             document.getElementById('game-pairs-left').innerText = `${matchedPairsCount} / ${totalPairs}`;
-            document.getElementById('game-flips').innerText = flipsCount;
+            document.getElementById('game-attempts').innerText = attemptsCount;
             document.getElementById('game-timer').innerText = "00:00";
+            updateSelectionStatus();
 
-            // Select Subset of questions
-            let shuffledQuestions = [...flashcardData].sort(() => 0.5 - Math.random()).slice(0, pairCount);
+            // Extract randomly selected question items
+            let shuffledItems = [...flashcardData].sort(() => 0.5 - Math.random()).slice(0, pairCount);
             
-            // Build cards pairs: Type Q & Type A
-            gameCards = [];
-            shuffledQuestions.forEach(item => {
-                gameCards.push({
-                    pairId: item.id,
-                    type: 'Q',
-                    text: item.q
-                });
-                gameCards.push({
-                    pairId: item.id,
-                    type: 'A',
-                    text: item.a
-                });
+            // Build separate list for Questions and Answers
+            let qList = shuffledItems.map(item => ({ pairId: item.id, text: item.q }));
+            let aList = shuffledItems.map(item => ({ pairId: item.id, text: item.a }));
+
+            // Shuffle questions and answers independently
+            qList.sort(() => 0.5 - Math.random());
+            aList.sort(() => 0.5 - Math.random());
+
+            // Render Questions List
+            const qContainer = document.getElementById('grid-questions');
+            qContainer.innerHTML = '';
+            qList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'direct-card bg-white border-2 border-emerald-200 hover:border-emerald-400 p-3.5 rounded-2xl cursor-pointer shadow-sm flex items-center justify-between gap-3 text-slate-800 text-xs sm:text-sm font-bold';
+                card.dataset.pairId = item.pairId;
+                card.dataset.type = 'Q';
+                card.onclick = () => handleCardSelect(card, 'Q', item.pairId);
+                card.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs flex items-center justify-center shrink-0 font-bold">問</span>
+                        <span>${item.text}</span>
+                    </div>
+                    <i class="fa-regular fa-circle text-emerald-300 text-sm opacity-50 shrink-0"></i>
+                `;
+                qContainer.appendChild(card);
             });
 
-            // Shuffle all cards
-            gameCards.sort(() => 0.5 - Math.random());
-
-            // Render Grid
-            const grid = document.getElementById('game-cards-grid');
-            grid.innerHTML = '';
-            
-            gameCards.forEach((card, index) => {
-                const cardEl = document.createElement('div');
-                cardEl.className = 'game-card h-28 sm:h-36 cursor-pointer select-none';
-                cardEl.dataset.index = index;
-                cardEl.dataset.pairId = card.pairId;
-                cardEl.onclick = () => handleCardClick(cardEl, index);
-
-                cardEl.innerHTML = `
-                    <div class="game-card-inner rounded-2xl shadow-sm">
-                        <!-- Front (Hidden Face) -->
-                        <div class="backface-hidden absolute inset-0 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex flex-col items-center justify-center text-white p-2 border-2 border-white/40 shadow-inner">
-                            <i class="fa-solid fa-puzzle-piece text-2xl mb-1 opacity-80"></i>
-                            <span class="text-xs font-black tracking-wider uppercase opacity-90">點擊翻牌</span>
-                        </div>
-                        <!-- Back (Exposed Text) -->
-                        <div class="backface-hidden rotate-y-180 absolute inset-0 ${card.type === 'Q' ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-teal-50 border-teal-300 text-teal-900'} border-2 rounded-2xl p-2.5 flex flex-col justify-between overflow-y-auto">
-                            <span class="text-[10px] font-bold self-start px-1.5 py-0.5 rounded ${card.type === 'Q' ? 'bg-amber-200 text-amber-800' : 'bg-teal-200 text-teal-800'}">
-                                ${card.type === 'Q' ? '問題' : '答案'}
-                            </span>
-                            <p class="text-xs sm:text-sm font-bold text-center leading-tight my-auto">
-                                ${card.text}
-                            </p>
-                        </div>
+            // Render Answers List
+            const aContainer = document.getElementById('grid-answers');
+            aContainer.innerHTML = '';
+            aList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'direct-card bg-white border-2 border-sky-200 hover:border-sky-400 p-3.5 rounded-2xl cursor-pointer shadow-sm flex items-center justify-between gap-3 text-slate-800 text-xs sm:text-sm font-bold';
+                card.dataset.pairId = item.pairId;
+                card.dataset.type = 'A';
+                card.onclick = () => handleCardSelect(card, 'A', item.pairId);
+                card.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-700 text-xs flex items-center justify-center shrink-0 font-bold">答</span>
+                        <span>${item.text}</span>
                     </div>
+                    <i class="fa-regular fa-circle text-sky-300 text-sm opacity-50 shrink-0"></i>
                 `;
-                grid.appendChild(cardEl);
+                aContainer.appendChild(card);
             });
 
             // Start Timer
@@ -603,50 +642,106 @@
             }, 1000);
         }
 
-        function handleCardClick(cardEl, index) {
+        function handleCardSelect(cardEl, type, pairId) {
             if (isProcessing) return;
-            if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+            if (cardEl.classList.contains('matched-fade')) return;
 
-            playSound('flip');
-            cardEl.classList.add('flipped');
-            flippedCards.push({ cardEl, index, data: gameCards[index] });
+            playSound('select');
 
-            if (flippedCards.length === 2) {
-                flipsCount++;
-                document.getElementById('game-flips').innerText = flipsCount;
-                checkMatch();
+            if (type === 'Q') {
+                if (selectedQuestionCard === cardEl) {
+                    // Unselect if clicked again
+                    cardEl.classList.remove('selected-q');
+                    selectedQuestionCard = null;
+                } else {
+                    if (selectedQuestionCard) selectedQuestionCard.classList.remove('selected-q');
+                    selectedQuestionCard = cardEl;
+                    selectedQuestionCard.classList.add('selected-q');
+                }
+            } else if (type === 'A') {
+                if (selectedAnswerCard === cardEl) {
+                    // Unselect if clicked again
+                    cardEl.classList.remove('selected-a');
+                    selectedAnswerCard = null;
+                } else {
+                    if (selectedAnswerCard) selectedAnswerCard.classList.remove('selected-a');
+                    selectedAnswerCard = cardEl;
+                    selectedAnswerCard.classList.add('selected-a');
+                }
+            }
+
+            updateSelectionStatus();
+
+            // If both Question and Answer are selected, verify match!
+            if (selectedQuestionCard && selectedAnswerCard) {
+                attemptsCount++;
+                document.getElementById('game-attempts').innerText = attemptsCount;
+                verifyDirectMatch();
             }
         }
 
-        function checkMatch() {
+        function verifyDirectMatch() {
             isProcessing = true;
-            const [c1, c2] = flippedCards;
+            const qPairId = selectedQuestionCard.dataset.pairId;
+            const aPairId = selectedAnswerCard.dataset.pairId;
 
-            if (c1.data.pairId === c2.data.pairId && c1.data.type !== c2.data.type) {
+            if (qPairId === aPairId) {
                 // MATCH SUCCESS!
                 playSound('match');
+                const qCard = selectedQuestionCard;
+                const aCard = selectedAnswerCard;
+
+                qCard.classList.remove('selected-q');
+                aCard.classList.remove('selected-a');
+                qCard.classList.add('bg-emerald-100', 'border-emerald-500');
+                aCard.classList.add('bg-emerald-100', 'border-emerald-500');
+
                 setTimeout(() => {
-                    c1.cardEl.classList.add('matched');
-                    c2.cardEl.classList.add('matched');
+                    qCard.classList.add('matched-fade');
+                    aCard.classList.add('matched-fade');
                     matchedPairsCount++;
                     document.getElementById('game-pairs-left').innerText = `${matchedPairsCount} / ${totalPairs}`;
-                    flippedCards = [];
+                    
+                    selectedQuestionCard = null;
+                    selectedAnswerCard = null;
                     isProcessing = false;
+                    updateSelectionStatus();
 
-                    // Check Win
                     if (matchedPairsCount === totalPairs) {
                         handleGameWin();
                     }
                 }, 400);
+
             } else {
                 // MATCH FAILED!
                 playSound('wrong');
+                const qCard = selectedQuestionCard;
+                const aCard = selectedAnswerCard;
+
+                qCard.classList.add('wrong-shake');
+                aCard.classList.add('wrong-shake');
+
                 setTimeout(() => {
-                    c1.cardEl.classList.remove('flipped');
-                    c2.cardEl.classList.remove('flipped');
-                    flippedCards = [];
+                    qCard.classList.remove('wrong-shake', 'selected-q');
+                    aCard.classList.remove('wrong-shake', 'selected-a');
+                    selectedQuestionCard = null;
+                    selectedAnswerCard = null;
                     isProcessing = false;
-                }, 900);
+                    updateSelectionStatus();
+                }, 700);
+            }
+        }
+
+        function updateSelectionStatus() {
+            const statusEl = document.getElementById('selection-status');
+            if (selectedQuestionCard && !selectedAnswerCard) {
+                statusEl.innerText = "已選擇【問題】，請再點選【答案】...";
+            } else if (!selectedQuestionCard && selectedAnswerCard) {
+                statusEl.innerText = "已選擇【答案】，請再點選【問題】...";
+            } else if (selectedQuestionCard && selectedAnswerCard) {
+                statusEl.innerText = "正在比對中...";
+            } else {
+                statusEl.innerText = "請點選卡片開始配對...";
             }
         }
 
@@ -658,11 +753,11 @@
             const secs = String(secondsElapsed % 60).padStart(2, '0');
             
             document.getElementById('final-time').innerText = `${mins}:${secs}`;
-            document.getElementById('final-flips').innerText = flipsCount;
+            document.getElementById('final-attempts').innerText = attemptsCount;
             
             setTimeout(() => {
                 document.getElementById('victory-modal').classList.remove('hidden');
-            }, 600);
+            }, 500);
         }
 
         function resetMatchGame() {
